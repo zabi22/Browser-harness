@@ -1,0 +1,8 @@
+# src/lib rules
+
+- Model thinking capabilities and normalization live in `src/lib/models.ts`; shared ThinkingControls bind matrix and composer to the same persisted settings. Claude uses adaptive thinking except Haiku's bounded budget; expose only live-verified effort levels.
+- Media request bodies per provider family live in `src/lib/media-request.ts` (image gen/edit formats openai/gemini-chat/generate-content; OpenAI edits multipart; Veo instances/parameters vs Omni Interactions; Lyria user_input) while `/api/media` only routes, authenticates and stores. Why: the wire shapes differ per family and stay testable without the network.
+- Fresh workspaces warm-boot from a preloaded v86 RAM state (`src/assets/starter-state.bin.asset.json`, hash-pinned in `public/vendor/linux/integrity.json`, IndexedDB-cached by hash); workspaces with a saved disk overlay cold-boot so user changes win. Regenerate the state by booting Linux in Playwright and calling `linuxFor(ws).captureState()`. Why: near-instant Linux on open without restoring per-user session memory.
+- Separate WASI processes run in isolated workers with no host/network imports and bounded runtime, scoped to the originating session and stopped on cancellation; synchronous programs support stop but not live pause/input. Why: external binaries cannot access app credentials or another session's processes.
+- `markdown-math.ts` detects dollar equations and supplies loop formatting guidance; explicit delimiters avoid currency ambiguity.
+- Project starters live in `src/lib/project-templates.ts`; web previews bundle workspace files with esbuild-wasm in `src/lib/web-preview.ts` into a sandboxed srcdoc iframe using esm.sh import maps. Why: real saved files, no app credentials reach previewed code.

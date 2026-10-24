@@ -1,0 +1,84 @@
+# Open Browser Harness roadmap
+- [ ] Rebuild the interface as a Paper & Ink editorial control center; verify desktop and narrow-screen navigation, composer, and theme switching.
+- [x] Restore dollar math while preserving money; instruct models to use currency codes such as USD 25. Nineteen regression tests pass; browser renderer shows equations beside literal USD amounts.
+- [x] Import OBH chat JSON as new copies with branches/thinking; auto-save failed partial replies, retain local recovery, remove thinking truncation; 28 focused tests pass and automatic build passes.
+- [ ] Verify signed-in JSON import/reload and failed reply/reload — blocked: this remixed backend has no auth users; owner must sign up/sign in first.
+- [x] Preloaded starter RAM state for Linux: warm boot 98.5s -> 6.2s verified in-browser, saved-disk workspaces still cold-boot with files intact
+- [x] Add every gateway image, video and music model (8 image, 4 video, 2 Lyria) with per-family request bodies, a music tool and an audio player; verified through /api/media and in-app
+- [x] Fix backup import with missing workspaces; old encrypted backup restores chats and branch links in signed-in Studio, new export includes workspace metadata, four regressions pass, automatic validation passes.
+- [x] Detect network loss and unexpected shutdowns; signed-in interrupted stream, offline disabled actions, reload with saved thinking, real model resume, and saved reply restoration verified.
+- [x] Add Pause loop separate from Stop; signed-in pause before first token, reload, real model resume, and intentional Stop without recovery prompt verified; 34 focused tests pass.
+- [x] Repair empty-reply API history with [Didn't reply] and add auto-continuation toggle in the model parameter matrix; 26 tests pass, live Claude empty-history follow-up succeeds, and simulated exhaustion -> real continuation -> saved reply reload verified in signed-in UI.
+- [x] Single-owner lock (Registration Closed)
+- [x] DB: conversations, messages (branch tree), prompts, settings
+- [x] Internal streaming proxy (/api/chat) for GPT, Claude, Gemini
+- [x] 3-column studio: chats+models / chat canvas / prompt library
+- [x] SearXNG web search, uploads, branching, clone/export/delete
+- [x] Encrypted backup export/import in settings
+- [x] Name the app "Open Browser Harness" (OBH)
+- [x] Context meter + on-demand summarize/drop
+- [x] Delete messages, redo, copy response, code language labels
+- [x] Per-chat clone/export/delete menu in sidebar
+- [x] More themes
+- [x] Minimal, small, animated mascots per provider (Clawd, pixel droid, Dot with beret)
+- [x] Check which other models are available (report only)
+- [x] Fix Gemini 3.8 Flash / 4 Argon errors
+- [x] Image + video generation callable by models (model matrix sections)
+- [x] Speech-to-text button, clear prompt button
+- [x] Droid: black eyes, rounded torso; dropdown hover highlight
+- [x] Mobile support polish
+- [x] Save unsent prompt drafts per chat
+- [x] Auto-scroll only sticks to bottom while user is at the bottom
+- [ ] Document image extraction (pptx/docx/pdf) — user to test in-app
+- [ ] Speech-to-text — untested end-to-end
+- [ ] Video generation — untested end-to-end
+- [x] Droid eyes black on mobile
+- [x] Tool calling: search, fetch, image, video tools + browser-side MCP servers
+- [ ] MCP tools — untested against a real server (needs user's server)
+- [x] Dot sways continuously (smooth easing)
+- [x] Visible model reasoning (collapsible "Thinking" panel, persisted per reply)
+- [x] SSE keepalive + Anthropic thinking to prevent cut-offs during silent thinking
+- [x] Skills: progressive loading, GitHub import, model can import skills itself
+- [ ] Reasoning display + skills — untested in-app
+- [x] Verify model-specific thinking/effort arguments before enabling controls (all 13 models, low/medium/high; six off modes)
+- [x] Add synchronized thinking/effort controls in model matrix and composer
+- [x] Remove Dot's visible grid seams
+- [x] Rename app to Open Browser Harness (OBH), incl. favicon
+- [x] Fix stale file reads: agent edit said committed, file kept old content, newest commit showed an empty diff — storage GETs now cache-bust with a unique query param + `no-store` (`workspace-fs.readBlob`); verified end-to-end in the browser: second commit shows the new content as committed and the old content as previous.
+- [x] Workspaces, files panel, file/shell/image/OCR tools, workspace export
+
+## Browser Linux and agent upgrade
+- [x] Fix preview Buffer export crash by using optimized ESM in development; three signed-in Studio visits and dropdown interaction pass without page errors, six Git regression tests pass, and automatic validation passes.
+- [x] Fix latest Vite 7 publishing failure resolving `node:buffer`: direct client-only file resolution avoids Nitro's builtin redirect; six Git regressions and automatic validation pass.
+- [x] Replace repeatedly SIGKILLed Vite 8 with supported Vite 7.3.7: automatic validation and six Buffer/Git regressions pass; publishing-run confirmation remains pending the next user-authorized deployment.
+- [x] Fix missing Buffer helper in deployment: move shared configuration source from globally ignored `build/` into `tooling/` and update both imports.
+- [x] Fix the production Buffer dependency resolution: matched the published crash to safe-buffer receiving an empty module; production-browser Git fixture and six Git tests pass, automatic validation passes, and signed-in Studio loads and reloads twice without page errors. Published deployment still needs Update before verification there.
+- [x] Investigate Studio reload crash: signed-in preview startup and repeated reloads pass; production-specific regression now covers the dependency initialization missed by development-only checks.
+- [x] Automatically start Linux on workspace open; preserve running guests until explicit stop/restart.
+- [x] Repair Linux command execution and output; follow output only from the shell bottom.
+- [ ] Verify manual and model tool paths read back a created guest file; signed-in UI awaits owner sign-in on the remixed backend.
+- [x] Rename YOLO Mode; verify restart permissions and distinguish Linux from cloud file tools.
+- [x] Replace Amla and remove its runtime/dependencies; pinned Alpine 3.21 x86/v86 with Python, pip, Git and curl. Integrated cold boot measured about 130 seconds.
+- [x] Immutable base cache and cloud-backed IndexedDB disk overlays; verified reboot restores content, mode and symlink. Revision conflicts preserve local data; paused saves resume before checkpoint.
+- [x] Synchronized None/Ask/YOLO/custom permissions, editable/deletable custom presets and per-session settings.
+- [x] Agent restart/continuation tools, bounded model/tool timeouts, ordered thinking/tool segments and user questions. Live Ask approval -> timeout change -> question -> reply -> reload passed.
+- [x] Isolated, session-scoped WASI processes with start/status/stop and cancellation. Live pause/input explicitly unsupported by synchronous runtime.
+- [x] Explicit cloud filesystem pull/push and file downloads.
+- [x] Cloud Git repositories, branch selector, README/files, commit changes, five-minute read-only clone credentials and ZIP download. Native Git clone and fetch verified with committed files.
+- [x] 86 regression tests pass; current automatic validation passes. Basic security checks returned no issues; deep code security analysis was not run.
+- [x] Disposable verification records only; existing user data not deleted.
+- [x] Linux autostart off by default: new "Start Linux automatically" permission (None=no, Ask=ask, YOLO=yes) plus an on/off switch in the Linux tab; bash tool asks before booting a stopped guest.
+- [x] Fix YOLO not applying to new chats (settings merge no longer hardcodes None), duplicate "Default" workspaces (single-flight, id-deduped load), and chat creation in fresh workspaces.
+- [x] Manual Linux commands run non-blocking with a stop button; left tabs are compact icons. Verified end-to-end with a fresh test account (owner account reset): boot, echo command, loop stop, follow-up command, new workspace + chat, YOLO dropdown — all pass, 42 tests green.
+- [ ] Brave search API activation — waiting for owner's BRAVE_SEARCH_API_KEY; existing SearXNG remains available.
+- [ ] Linux guest internet access — requires a separately hosted authenticated network relay; guest remains offline even in YOLO.
+- [ ] Publish upgrade — deployment approval was declined; waiting for user authorization.
+- [x] Configurable Linux VM memory (512 MiB–4 GiB) in the Linux tab; applies on next start, warm boot only at 512 MiB. CPU stays single-core Pentium-class (browser sandbox); typecheck and Linux tests pass, live boot at other sizes untested.
+
+## Project builder and OpenChat Publish
+- [x] Project templates (website, web app, game, Go CLI, Wails, Fyne) saved as real files; Projects tab + AI `create_project` tool.
+- [x] In-browser website preview (sandboxed frame); verified live with the website template.
+- [x] `build` / `publish` permissions always ask, even in YOLO or custom presets (tests).
+- [ ] GitHub Actions builds (Go, Wails, Fyne, Windows .exe + launch test) — waiting for owner to connect GitHub.
+- [ ] Publish dashboard, release records, Cloudflare deploy/rollback — waiting for approval of the database change and a Cloudflare connection.
+- [ ] Review-before-save diffs; custom domains (Phase 5, separate approval).

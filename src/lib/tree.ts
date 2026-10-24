@@ -1,5 +1,10 @@
 // Pure helpers for branching conversation trees (messages linked by parent_id).
-export interface TreeMsg { id: string; parent_id: string | null; role: string; created_at: string }
+export interface TreeMsg {
+  id: string;
+  parent_id: string | null;
+  role: string;
+  created_at: string;
+}
 
 const byTime = (a: TreeMsg, b: TreeMsg) => a.created_at.localeCompare(b.created_at);
 
@@ -7,7 +12,10 @@ export function pathTo<T extends TreeMsg>(leafId: string | null, all: T[]): T[] 
   const map = new Map(all.map((m) => [m.id, m]));
   const out: T[] = [];
   let cur = leafId ? map.get(leafId) : undefined;
-  while (cur) { out.unshift(cur); cur = cur.parent_id ? map.get(cur.parent_id) : undefined; }
+  while (cur) {
+    out.unshift(cur);
+    cur = cur.parent_id ? map.get(cur.parent_id) : undefined;
+  }
   return out;
 }
 

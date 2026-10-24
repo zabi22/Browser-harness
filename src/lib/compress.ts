@@ -6,11 +6,59 @@ export const COMPRESSION_GUIDELINE =
   "You are receiving a compressed, high-density raw text extraction. Reconstruct the implied grammar, abbreviations, and skipped words natively in memory before generating your final response.";
 
 const STOP_WORDS = new Set([
-  "a", "an", "the", "which", "thereby", "is", "are", "was", "were", "be", "been", "being",
-  "that", "this", "these", "those", "of", "to", "in", "on", "at", "for", "with", "by",
-  "as", "it", "its", "and", "or", "so", "very", "really", "just", "quite", "also",
-  "then", "there", "here", "thus", "hence", "whereby", "therefore", "furthermore",
-  "moreover", "basically", "actually", "simply", "has", "have", "had", "do", "does", "did",
+  "a",
+  "an",
+  "the",
+  "which",
+  "thereby",
+  "is",
+  "are",
+  "was",
+  "were",
+  "be",
+  "been",
+  "being",
+  "that",
+  "this",
+  "these",
+  "those",
+  "of",
+  "to",
+  "in",
+  "on",
+  "at",
+  "for",
+  "with",
+  "by",
+  "as",
+  "it",
+  "its",
+  "and",
+  "or",
+  "so",
+  "very",
+  "really",
+  "just",
+  "quite",
+  "also",
+  "then",
+  "there",
+  "here",
+  "thus",
+  "hence",
+  "whereby",
+  "therefore",
+  "furthermore",
+  "moreover",
+  "basically",
+  "actually",
+  "simply",
+  "has",
+  "have",
+  "had",
+  "do",
+  "does",
+  "did",
 ]);
 
 /** Words that change meaning and must survive (negations, quantifiers). */
@@ -64,13 +112,26 @@ function filterLexical(s: string): string {
 function dedupeLines(s: string): string {
   const out: string[] = [];
   const seen = new Set<string>();
-  let prev = "", run = 0, dropped = false;
-  const flush = () => { if (run > 1 && !dropped) out[out.length - 1] += ` ×${run}`; };
+  let prev = "",
+    run = 0,
+    dropped = false;
+  const flush = () => {
+    if (run > 1 && !dropped) out[out.length - 1] += ` ×${run}`;
+  };
   for (const line of s.split("\n")) {
     const key = line.trim().toLowerCase();
-    if (key && key === prev) { run++; continue; }
-    flush(); prev = key; run = 1; dropped = false;
-    if (key.length > 24 && seen.has(key)) { dropped = true; continue; }
+    if (key && key === prev) {
+      run++;
+      continue;
+    }
+    flush();
+    prev = key;
+    run = 1;
+    dropped = false;
+    if (key.length > 24 && seen.has(key)) {
+      dropped = true;
+      continue;
+    }
     seen.add(key);
     out.push(line);
   }
@@ -86,7 +147,8 @@ function fitToBudget(s: string, maxChars: number): string {
   if (s.length <= maxChars) return s;
   const units = s.split(/(?<=[.!?])\s+|\n/).filter((u) => u.trim());
   const words = units.map((u) => u.toLowerCase().match(/[a-z0-9]{3,}/g) ?? []);
-  const df = new Map<string, number>(), tf = new Map<string, number>();
+  const df = new Map<string, number>(),
+    tf = new Map<string, number>();
   for (const ws of words) {
     for (const w of ws) tf.set(w, (tf.get(w) ?? 0) + 1);
     for (const w of new Set(ws)) df.set(w, (df.get(w) ?? 0) + 1);
@@ -95,7 +157,8 @@ function fitToBudget(s: string, maxChars: number): string {
   const scored = units.map((u, i) => {
     const ws = words[i] ?? [];
     let sc = 0;
-    for (const w of new Set(ws)) sc += Math.log(1 + (tf.get(w) ?? 0)) * Math.log(N / (df.get(w) ?? 1));
+    for (const w of new Set(ws))
+      sc += Math.log(1 + (tf.get(w) ?? 0)) * Math.log(N / (df.get(w) ?? 1));
     sc /= Math.sqrt(ws.length || 1);
     if (/\d/.test(u)) sc *= 1.3;
     if (/^#|:$/.test(u.trim())) sc *= 1.5;
@@ -106,11 +169,16 @@ function fitToBudget(s: string, maxChars: number): string {
   let used = 0;
   for (const x of [...scored].sort((a, b) => b.sc - a.sc)) {
     if (used + x.u.length + 6 > maxChars) continue;
-    keep.add(x.i); used += x.u.length + 6;
+    keep.add(x.i);
+    used += x.u.length + 6;
   }
-  let out = "", gap = false;
+  let out = "",
+    gap = false;
   for (const x of scored) {
-    if (keep.has(x.i)) { out += (gap ? "\n[…]\n" : out ? "\n" : "") + x.u; gap = false; } else gap = true;
+    if (keep.has(x.i)) {
+      out += (gap ? "\n[…]\n" : out ? "\n" : "") + x.u;
+      gap = false;
+    } else gap = true;
   }
   return out;
 }
@@ -129,8 +197,15 @@ export function compressText(text: string, maxChars?: number): string {
 const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/'/g, "&apos;");
 
 /** Format an attachment for the payload, compressing when it exceeds the threshold. */
-export function formatAttachment(name: string, text: string): { block: string; compressed: boolean } {
-  if (text.length <= COMPRESS_THRESHOLD) return { block: `\n\n[File: ${name}]\n${text}`, compressed: false };
+export function formatAttachment(
+  name: string,
+  text: string,
+): { block: string; compressed: boolean } {
+  if (text.length <= COMPRESS_THRESHOLD)
+    return { block: `\n\n[File: ${name}]\n${text}`, compressed: false };
   const data = compressText(text);
-  return { block: `\n\n<CompressedFile name='${escapeAttr(name)}' data='${escapeAttr(data)}'/>`, compressed: true };
+  return {
+    block: `\n\n<CompressedFile name='${escapeAttr(name)}' data='${escapeAttr(data)}'/>`,
+    compressed: true,
+  };
 }

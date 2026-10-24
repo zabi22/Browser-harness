@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { linuxFor } from "@/lib/linux-environment";
 import { listProcesses, subscribeProcesses, stopProcess } from "@/lib/wasm-processes";
 import { toast } from "sonner";
@@ -18,7 +24,15 @@ export function downloadBlob(b: Blob, name: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
-export function EnvironmentPanel({ ws, settings, onSettings }: { ws: string | null; settings?: Settings; onSettings?: (p: Partial<Settings>) => void }) {
+export function EnvironmentPanel({
+  ws,
+  settings,
+  onSettings,
+}: {
+  ws: string | null;
+  settings?: Settings;
+  onSettings?: (p: Partial<Settings>) => void;
+}) {
   const [, rerender] = useState(0),
     [command, setCommand] = useState(""),
     [busy, setBusy] = useState(false),
@@ -29,8 +43,12 @@ export function EnvironmentPanel({ ws, settings, onSettings }: { ws: string | nu
   const follow = useRef(true);
   useEffect(() => env?.subscribe(() => rerender((n) => n + 1)), [env]);
   useEffect(() => subscribeProcesses(() => rerender((n) => n + 1)), []);
-  useEffect(() => { follow.current = true; }, [ws]);
-  useEffect(() => { env?.setMemory(settings?.linuxMemory ?? 512); }, [env, settings?.linuxMemory]);
+  useEffect(() => {
+    follow.current = true;
+  }, [ws]);
+  useEffect(() => {
+    env?.setMemory(settings?.linuxMemory ?? 512);
+  }, [env, settings?.linuxMemory]);
   useEffect(() => {
     const el = consoleRef.current;
     if (el && follow.current) el.scrollTop = el.scrollHeight;
@@ -72,10 +90,14 @@ export function EnvironmentPanel({ ws, settings, onSettings }: { ws: string | nu
         </span>
         <span className="font-mono text-[10px] text-muted-foreground">{env.state}</span>
       </div>
-      <div className="text-[11px] text-muted-foreground">{settings?.linuxMemory ?? 512} MiB · single-core x86 (Pentium-class) · Python 3.12 · offline</div>
+      <div className="text-[11px] text-muted-foreground">
+        {settings?.linuxMemory ?? 512} MiB · single-core x86 (Pentium-class) · Python 3.12 · offline
+      </div>
       {settings && onSettings && (
         <div className="flex items-center justify-between gap-2">
-          <Label htmlFor="lx-mem" className="text-xs">Memory</Label>
+          <Label htmlFor="lx-mem" className="text-xs">
+            Memory
+          </Label>
           <Select
             value={String(settings.linuxMemory ?? 512)}
             onValueChange={(v) => {
@@ -86,10 +108,14 @@ export function EnvironmentPanel({ ws, settings, onSettings }: { ws: string | nu
                 toast.info("Memory applies when Linux restarts");
             }}
           >
-            <SelectTrigger id="lx-mem" aria-label="Linux memory" className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger id="lx-mem" aria-label="Linux memory" className="h-7 w-28 text-xs">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {[512, 1024, 2048, 4096].map((m) => (
-                <SelectItem key={m} value={String(m)}>{m >= 1024 ? `${m / 1024} GiB` : `${m} MiB`}</SelectItem>
+                <SelectItem key={m} value={String(m)}>
+                  {m >= 1024 ? `${m / 1024} GiB` : `${m} MiB`}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -97,12 +123,20 @@ export function EnvironmentPanel({ ws, settings, onSettings }: { ws: string | nu
       )}
       {settings && onSettings && (
         <div className="flex items-center justify-between">
-          <Label htmlFor="lx-auto" className="text-xs">Start Linux when a workspace opens</Label>
-          <Switch id="lx-auto" checked={settings.linuxAutostart ?? false} onCheckedChange={(v) => onSettings({ linuxAutostart: v })} />
+          <Label htmlFor="lx-auto" className="text-xs">
+            Start Linux when a workspace opens
+          </Label>
+          <Switch
+            id="lx-auto"
+            checked={settings.linuxAutostart ?? false}
+            onCheckedChange={(v) => onSettings({ linuxAutostart: v })}
+          />
         </div>
       )}
       {settings && onSettings && (settings.linuxAutostart ?? false) && (
-        <p className="text-[11px] text-muted-foreground">Also needs the "Start Linux automatically" permission (Ask or YOLO allow it).</p>
+        <p className="text-[11px] text-muted-foreground">
+          Also needs the "Start Linux automatically" permission (Ask or YOLO allow it).
+        </p>
       )}
       <div className="flex flex-wrap gap-1">
         <Button
@@ -128,7 +162,7 @@ export function EnvironmentPanel({ ws, settings, onSettings }: { ws: string | nu
         <Button
           variant="ghost"
           size="icon"
-          disabled={busy || !['running','paused','unsynced'].includes(env.state)}
+          disabled={busy || !["running", "paused", "unsynced"].includes(env.state)}
           title="Save disk to cloud"
           aria-label="Save Linux disk"
           onClick={() => act(() => env.checkpoint())}
@@ -169,7 +203,7 @@ export function EnvironmentPanel({ ws, settings, onSettings }: { ws: string | nu
           onClick={() =>
             act(async () => {
               await env.checkpoint();
-               if (env.state === "running" || env.state === "paused") env.stop();
+              if (env.state === "running" || env.state === "paused") env.stop();
             })
           }
         >
@@ -195,7 +229,14 @@ export function EnvironmentPanel({ ws, settings, onSettings }: { ws: string | nu
           </Button>
         </div>
       )}
-      <pre ref={consoleRef} aria-label="Linux output" onScroll={(e) => { follow.current = atConsoleBottom(e.currentTarget); }} className="h-64 overflow-auto rounded-md border border-border bg-background p-2 font-mono text-[10px] whitespace-pre-wrap break-words">
+      <pre
+        ref={consoleRef}
+        aria-label="Linux output"
+        onScroll={(e) => {
+          follow.current = atConsoleBottom(e.currentTarget);
+        }}
+        className="h-64 overflow-auto rounded-md border border-border bg-background p-2 font-mono text-[10px] whitespace-pre-wrap break-words"
+      >
         {env.output || "Linux stopped"}
       </pre>
       <form
@@ -229,7 +270,11 @@ export function EnvironmentPanel({ ws, settings, onSettings }: { ws: string | nu
           </Button>
         )}
       </form>
-      {cmdRunning && <p className="text-[11px] text-muted-foreground">Command running — you can keep using the app; press stop to cancel it.</p>}
+      {cmdRunning && (
+        <p className="text-[11px] text-muted-foreground">
+          Command running — you can keep using the app; press stop to cancel it.
+        </p>
+      )}
       <div className="border-t border-border pt-3 text-xs font-semibold">WASM processes</div>
       {listProcesses().map((p) => (
         <div key={p.id} className="space-y-1 border-b border-border py-2">

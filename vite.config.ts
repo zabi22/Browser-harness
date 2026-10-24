@@ -22,7 +22,12 @@ export default defineConfig({
       // pkce-challenge (pulled in by the MCP SDK) only exports "browser"/"node" builds; the worker
       // build matches neither. Its browser build uses Web Crypto, which the worker supports.
       alias: [
-        { find: "pkce-challenge", replacement: fileURLToPath(new URL("./node_modules/pkce-challenge/dist/index.browser.js", import.meta.url)) },
+        {
+          find: "pkce-challenge",
+          replacement: fileURLToPath(
+            new URL("./node_modules/pkce-challenge/dist/index.browser.js", import.meta.url),
+          ),
+        },
       ],
     },
   },

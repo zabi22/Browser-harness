@@ -4,7 +4,14 @@ import { findWebProjects, importMap, pkgName, resolveLocal } from "./web-preview
 
 describe("project templates", () => {
   it("offers the six requested project types", () =>
-    expect(TEMPLATES.map((t) => t.id)).toEqual(["website", "webapp", "game", "go-cli", "wails", "fyne"]));
+    expect(TEMPLATES.map((t) => t.id)).toEqual([
+      "website",
+      "webapp",
+      "game",
+      "go-cli",
+      "wails",
+      "fyne",
+    ]));
   for (const t of TEMPLATES) {
     it(`${t.id} includes a build workflow and readme`, () => {
       const f = templateFiles(t.id, "My App");
@@ -13,7 +20,8 @@ describe("project templates", () => {
     });
   }
   it("web templates have a preview entry that exists", () => {
-    for (const t of TEMPLATES.filter((t) => t.previewEntry)) expect(templateFiles(t.id, "x")[t.previewEntry!]).toBeTruthy();
+    for (const t of TEMPLATES.filter((t) => t.previewEntry))
+      expect(templateFiles(t.id, "x")[t.previewEntry!]).toBeTruthy();
   });
   it("Go templates have unit tests and a module", () => {
     for (const id of ["go-cli", "wails", "fyne"] as const) {
@@ -38,8 +46,16 @@ describe("project templates", () => {
 
 describe("web preview helpers", () => {
   it("finds web and Wails frontends", () =>
-    expect(findWebProjects([{ path: "site/src/main.tsx" }, { path: "calc/frontend/src/main.tsx" }, { path: "x/main.go" }]))
-      .toEqual([{ root: "site", entry: "src/main.tsx" }, { root: "calc", entry: "frontend/src/main.tsx" }]));
+    expect(
+      findWebProjects([
+        { path: "site/src/main.tsx" },
+        { path: "calc/frontend/src/main.tsx" },
+        { path: "x/main.go" },
+      ]),
+    ).toEqual([
+      { root: "site", entry: "src/main.tsx" },
+      { root: "calc", entry: "frontend/src/main.tsx" },
+    ]));
   it("resolves extensionless and index imports", () => {
     const files = new Set(["s/src/App.tsx", "s/src/ui/index.ts"]);
     expect(resolveLocal("s/src/main.tsx", "./App", files)).toBe("s/src/App.tsx");
@@ -48,6 +64,8 @@ describe("web preview helpers", () => {
   });
   it("maps packages to esm.sh sharing one React", () => {
     expect(pkgName("@a/b/c")).toBe("@a/b");
-    expect(importMap(["lucide-react"]).imports["lucide-react"]).toBe("https://esm.sh/lucide-react?external=react,react-dom");
+    expect(importMap(["lucide-react"]).imports["lucide-react"]).toBe(
+      "https://esm.sh/lucide-react?external=react,react-dom",
+    );
   });
 });

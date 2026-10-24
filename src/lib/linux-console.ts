@@ -4,9 +4,14 @@ export function commandScriptPath(token: string) {
 }
 
 export function cleanConsole(text: string) {
-  return text.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "").replace(/\r\n/g, "\n").replace(/\r/g, "");
+  return text
+    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "");
 }
 
-export function atConsoleBottom(el: Pick<HTMLElement, "scrollHeight" | "scrollTop" | "clientHeight">) {
+export function atConsoleBottom(
+  el: Pick<HTMLElement, "scrollHeight" | "scrollTop" | "clientHeight">,
+) {
   return el.scrollHeight - el.scrollTop - el.clientHeight <= 1;
 }

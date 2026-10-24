@@ -10,7 +10,16 @@ import "highlight.js/styles/github-dark.css";
 import "katex/dist/katex.min.css";
 
 const LABELS: Record<string, string> = {
-  js: "javascript", ts: "typescript", py: "python", sh: "bash", shell: "bash", zsh: "bash", yml: "yaml", md: "markdown", plaintext: "txt", text: "txt",
+  js: "javascript",
+  ts: "typescript",
+  py: "python",
+  sh: "bash",
+  shell: "bash",
+  zsh: "bash",
+  yml: "yaml",
+  md: "markdown",
+  plaintext: "txt",
+  text: "txt",
 };
 
 function langOf(children: ReactNode): string {
@@ -27,7 +36,9 @@ function CodeBlock({ children }: { children?: ReactNode }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-background/70">
       <div className="flex items-center justify-between border-b border-border bg-muted/50 px-3 py-1.5">
-        <span className="font-mono text-[11px] uppercase tracking-wider text-primary">{langOf(children)}</span>
+        <span className="font-mono text-[11px] uppercase tracking-wider text-primary">
+          {langOf(children)}
+        </span>
         <button
           type="button"
           onClick={() => {
@@ -41,7 +52,9 @@ function CodeBlock({ children }: { children?: ReactNode }) {
           {done ? "Copied" : "Copy code"}
         </button>
       </div>
-      <pre ref={ref} className="!m-0 overflow-x-auto p-4 text-sm">{children}</pre>
+      <pre ref={ref} className="!m-0 overflow-x-auto p-4 text-sm">
+        {children}
+      </pre>
     </div>
   );
 }

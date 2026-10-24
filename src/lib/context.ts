@@ -1,14 +1,22 @@
 // Pure helpers for the context window: markers, token estimates.
 // A message with role "context" is a marker: empty content = earlier history dropped,
 // non-empty content = a summary that replaces earlier history.
-export interface CtxMsg { role: string; content: string; attachments?: { type: string; text?: string }[] }
+export interface CtxMsg {
+  role: string;
+  content: string;
+  attachments?: { type: string; text?: string }[];
+}
 
 export const CONTEXT_ROLE = "context";
 
 /** Messages that are actually sent to the model, plus the active summary (if any). */
 export function activeContext<T extends CtxMsg>(path: T[]): { messages: T[]; summary: string } {
   let cut = -1;
-  for (let i = path.length - 1; i >= 0; i--) if (path[i]!.role === CONTEXT_ROLE) { cut = i; break; }
+  for (let i = path.length - 1; i >= 0; i--)
+    if (path[i]!.role === CONTEXT_ROLE) {
+      cut = i;
+      break;
+    }
   return {
     messages: path.slice(cut + 1).filter((m) => m.role === "user" || m.role === "assistant"),
     summary: cut >= 0 ? path[cut]!.content : "",
@@ -21,7 +29,9 @@ export function estimateTokens(text: string, images = 0): number {
 }
 
 export function messageTokens(m: CtxMsg): number {
-  const docs = (m.attachments ?? []).filter((a) => a.type === "doc").reduce((n, a) => n + (a.text?.length ?? 0), 0);
+  const docs = (m.attachments ?? [])
+    .filter((a) => a.type === "doc")
+    .reduce((n, a) => n + (a.text?.length ?? 0), 0);
   const imgs = (m.attachments ?? []).filter((a) => a.type === "image").length;
   return estimateTokens(m.content, imgs) + Math.ceil(docs / 4);
 }
@@ -43,8 +53,12 @@ export function chunkText(text: string, maxChars: number): string[] {
   let i = 0;
   while (i < text.length) {
     let end = Math.min(text.length, i + maxChars);
-    if (end < text.length) { const nl = text.lastIndexOf("\n", end); if (nl > i + maxChars / 2) end = nl + 1; }
-    out.push(text.slice(i, end)); i = end;
+    if (end < text.length) {
+      const nl = text.lastIndexOf("\n", end);
+      if (nl > i + maxChars / 2) end = nl + 1;
+    }
+    out.push(text.slice(i, end));
+    i = end;
   }
   return out;
 }

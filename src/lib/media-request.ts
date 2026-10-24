@@ -8,13 +8,26 @@ import type { ImageModelDef, VideoModelDef } from "./models";
 
 export function imageRequest(def: ImageModelDef, prompt: string, quality: string) {
   if (def.format === "gemini-chat")
-    return { model: def.id, messages: [{ role: "user", content: prompt }], modalities: ["image", "text"] };
+    return {
+      model: def.id,
+      messages: [{ role: "user", content: prompt }],
+      modalities: ["image", "text"],
+    };
   if (def.format === "generate-content")
-    return { model: def.id, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseModalities: ["TEXT", "IMAGE"] } };
+    return {
+      model: def.id,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+    };
   return { model: def.id, prompt, quality, size: "1024x1024" };
 }
 
-export function videoRequest(def: VideoModelDef, prompt: string, resolution: string, duration: number) {
+export function videoRequest(
+  def: VideoModelDef,
+  prompt: string,
+  resolution: string,
+  duration: number,
+) {
   const secs = nearest(duration, def.durations);
   if (def.family === "veo")
     return {
@@ -29,7 +42,11 @@ export function videoRequest(def: VideoModelDef, prompt: string, resolution: str
         aspectRatio: "16:9",
       },
     };
-  return { model: def.id, input: prompt, response_format: { type: "video", resolution, duration: `${secs}s` } };
+  return {
+    model: def.id,
+    input: prompt,
+    response_format: { type: "video", resolution, duration: `${secs}s` },
+  };
 }
 
 export function musicRequest(model: string, prompt: string) {
@@ -38,7 +55,10 @@ export function musicRequest(model: string, prompt: string) {
 
 /** Closest accepted value to `want` (Veo and Omni only allow certain clip lengths). */
 export function nearest(want: number, options: number[]): number {
-  return options.reduce((best, v) => (Math.abs(v - want) < Math.abs(best - want) ? v : best), options[0]!);
+  return options.reduce(
+    (best, v) => (Math.abs(v - want) < Math.abs(best - want) ? v : best),
+    options[0]!,
+  );
 }
 
 /** Split a data URL into its MIME type and raw base64. */
@@ -53,7 +73,13 @@ export function parseDataUrl(dataUrl: string): { mime: string; b64: string } {
  * (optional PNG mask whose transparent pixels mark the editable area); Gemini
  * shapes take the images inline on /images/generations and ignore masks.
  */
-export function imageEditRequest(def: ImageModelDef, prompt: string, quality: string, images: string[], mask?: string):
+export function imageEditRequest(
+  def: ImageModelDef,
+  prompt: string,
+  quality: string,
+  images: string[],
+  mask?: string,
+):
   | { endpoint: "edits"; form: FormData }
   | { endpoint: "generations"; body: Record<string, unknown> } {
   if (def.format === "gemini-chat")
@@ -61,7 +87,15 @@ export function imageEditRequest(def: ImageModelDef, prompt: string, quality: st
       endpoint: "generations",
       body: {
         model: def.id,
-        messages: [{ role: "user", content: [{ type: "text", text: prompt }, ...images.map((url) => ({ type: "image_url", image_url: { url } }))] }],
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              ...images.map((url) => ({ type: "image_url", image_url: { url } })),
+            ],
+          },
+        ],
         modalities: ["image", "text"],
       },
     };
@@ -70,7 +104,18 @@ export function imageEditRequest(def: ImageModelDef, prompt: string, quality: st
       endpoint: "generations",
       body: {
         model: def.id,
-        contents: [{ role: "user", parts: [{ text: prompt }, ...images.map((u) => { const { mime, b64 } = parseDataUrl(u); return { inlineData: { mimeType: mime, data: b64 } }; })] }],
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: prompt },
+              ...images.map((u) => {
+                const { mime, b64 } = parseDataUrl(u);
+                return { inlineData: { mimeType: mime, data: b64 } };
+              }),
+            ],
+          },
+        ],
         generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
       },
     };

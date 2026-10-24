@@ -2,10 +2,19 @@ import { streamChat, type Attachment, type Settings, type ToolCall } from "./stu
 import { buildTools, type ToolCtx } from "./tools";
 import { linuxFor } from "./linux-environment";
 import { MATH_CURRENCY_GUIDELINE } from "./markdown-math";
-import { boundedTimeout } from './agent-policy';
-import {stopSessionProcesses} from './wasm-processes';
-import { continuationMessages, DIDNT_REPLY, MAX_CONTINUATIONS, steeringMessages, steeringNote } from './reply-continuation';
-export interface Steering { queue: string[]; interrupt?: (() => void) | undefined }
+import { boundedTimeout } from "./agent-policy";
+import { stopSessionProcesses } from "./wasm-processes";
+import {
+  continuationMessages,
+  DIDNT_REPLY,
+  MAX_CONTINUATIONS,
+  steeringMessages,
+  steeringNote,
+} from "./reply-continuation";
+export interface Steering {
+  queue: string[];
+  interrupt?: (() => void) | undefined;
+}
 export interface LoopResult {
   text: string;
   segments: Attachment[];
@@ -37,9 +46,11 @@ export async function runAgentLoop({
   const segments: Attachment[] = [];
   const current = () => ctx.getSettings?.() ?? settings;
   const update = () => onUpdate({ text, segments: segments.map((s) => ({ ...s })) });
-  const kit = await buildTools(settings, skills, onSkillsChanged, {...ctx,signal});
-  const stopProcesses=()=>{if(ctx.sessionId)stopSessionProcesses(ctx.sessionId);};
-  signal.addEventListener('abort',stopProcesses,{once:true});
+  const kit = await buildTools(settings, skills, onSkillsChanged, { ...ctx, signal });
+  const stopProcesses = () => {
+    if (ctx.sessionId) stopSessionProcesses(ctx.sessionId);
+  };
+  signal.addEventListener("abort", stopProcesses, { once: true });
   let restarts = 0;
   let continuations = 0;
   try {
@@ -53,10 +64,15 @@ export async function runAgentLoop({
       );
       let stepText = "",
         reasonIdx = -1;
-      let stepReasoning = "", truncated = false;
+      let stepReasoning = "",
+        truncated = false;
       let calls: ToolCall[] = [];
       let steered = false;
-      if (steering) steering.interrupt = () => { steered = true; stepCtrl.abort(); };
+      if (steering)
+        steering.interrupt = () => {
+          steered = true;
+          stepCtrl.abort();
+        };
       try {
         const s = current();
         calls = await streamChat(
@@ -90,11 +106,14 @@ export async function runAgentLoop({
             if (a) a.text = (a.text ?? "") + r;
             update();
           },
-          () => { truncated = true; },
+          () => {
+            truncated = true;
+          },
         );
       } catch (e) {
         if (steered && !signal.aborted) calls = [];
-        else if (stepCtrl.signal.aborted && !signal.aborted) throw new Error("Model step timed out");
+        else if (stepCtrl.signal.aborted && !signal.aborted)
+          throw new Error("Model step timed out");
         else throw e;
       } finally {
         if (steering) steering.interrupt = undefined;
@@ -115,19 +134,29 @@ export async function runAgentLoop({
         const cs = current();
         const infinite = !!cs.infiniteContinuations;
         const limit = Math.max(1, Math.round(cs.maxContinuations ?? MAX_CONTINUATIONS));
-        if (truncated && cs.continueAtLimit && (infinite || continuations < limit) && !signal.aborted) {
+        if (
+          truncated &&
+          cs.continueAtLimit &&
+          (infinite || continuations < limit) &&
+          !signal.aborted
+        ) {
           continuations++;
           // Continuations don't consume agent tool steps; Stop still cancels.
           step--;
           convo = [...convo, ...continuationMessages(stepText, stepReasoning)];
-          segments.push({ type: "tool", name: "Reply continuation", output: `Continuing after output limit (${continuations}/${infinite ? "∞" : limit})` });
+          segments.push({
+            type: "tool",
+            name: "Reply continuation",
+            output: `Continuing after output limit (${continuations}/${infinite ? "∞" : limit})`,
+          });
           update();
           continue;
         }
         if (!text.trim()) text = DIDNT_REPLY;
-        if (truncated) text += current().continueAtLimit
-          ? "\n\n_(Output limit reached; automatic continuation stopped.)_"
-          : "\n\n_(Output limit reached.)_";
+        if (truncated)
+          text += current().continueAtLimit
+            ? "\n\n_(Output limit reached; automatic continuation stopped.)_"
+            : "\n\n_(Output limit reached.)_";
         update();
         return { text, segments };
       }
@@ -196,14 +225,26 @@ export async function runAgentLoop({
         update();
       }
       if (images.length || notes.length)
-        convo = [...convo, { role: "user", content: [images.length && "Images loaded by your tools", notes.length && steeringNote(notes)].filter(Boolean).join("\n\n"), images }];
+        convo = [
+          ...convo,
+          {
+            role: "user",
+            content: [
+              images.length && "Images loaded by your tools",
+              notes.length && steeringNote(notes),
+            ]
+              .filter(Boolean)
+              .join("\n\n"),
+            images,
+          },
+        ];
     }
     if (!signal.aborted) text += "\n\n_(Agent step limit reached)_";
     return { text, segments };
   } finally {
     // Publish the complete snapshot even when a model or tool throws.
     update();
-    signal.removeEventListener('abort',stopProcesses);
+    signal.removeEventListener("abort", stopProcesses);
     if (ctx.workspaceId) {
       const env = linuxFor(ctx.workspaceId);
       if (env.state === "running" || env.state === "unsynced")

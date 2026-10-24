@@ -27,8 +27,12 @@ export const Route = createFileRoute("/api/public/v1/chat/completions")({
           .eq("key_hash", hash)
           .maybeSingle();
         if (error) return jsonError(500, "Key lookup failed");
-        if (!row || !row.is_active) return jsonError(401, "Invalid API key", "authentication_error");
-        void supabaseAdmin.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", row.id);
+        if (!row || !row.is_active)
+          return jsonError(401, "Invalid API key", "authentication_error");
+        void supabaseAdmin
+          .from("api_keys")
+          .update({ last_used_at: new Date().toISOString() })
+          .eq("id", row.id);
 
         // 2. Parse body
         let input: Record<string, unknown>;
@@ -48,16 +52,26 @@ export const Route = createFileRoute("/api/public/v1/chat/completions")({
         let upstream: Response | null = null;
         let model = PRIMARY_MODEL;
         try {
-          upstream = await callUpstream(buildBody(input, PRIMARY_MODEL), lovableKey, request.signal);
+          upstream = await callUpstream(
+            buildBody(input, PRIMARY_MODEL),
+            lovableKey,
+            request.signal,
+          );
         } catch (e) {
           if (request.signal.aborted) return new Response(null, { status: 499 });
           console.error("primary call failed", e);
         }
         if (shouldFallback(upstream?.status ?? null)) {
-          console.warn(`primary ${PRIMARY_MODEL} failed (${upstream?.status ?? "network"}), falling back`);
+          console.warn(
+            `primary ${PRIMARY_MODEL} failed (${upstream?.status ?? "network"}), falling back`,
+          );
           model = FALLBACK_MODEL;
           try {
-            upstream = await callUpstream(buildBody(input, FALLBACK_MODEL), lovableKey, request.signal);
+            upstream = await callUpstream(
+              buildBody(input, FALLBACK_MODEL),
+              lovableKey,
+              request.signal,
+            );
           } catch (e) {
             if (request.signal.aborted) return new Response(null, { status: 499 });
             return jsonError(502, "Upstream unavailable");

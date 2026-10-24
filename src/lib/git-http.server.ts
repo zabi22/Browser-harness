@@ -43,8 +43,8 @@ export function parsePkts(bytes: Uint8Array) {
   const lines: string[] = [];
   let pos = 0;
   while (pos + 4 <= bytes.length) {
-    const header=new TextDecoder().decode(bytes.slice(pos,pos+4));
-    if(!/^[0-9a-fA-F]{4}$/.test(header)) throw new Error('Invalid Git packet');
+    const header = new TextDecoder().decode(bytes.slice(pos, pos + 4));
+    if (!/^[0-9a-fA-F]{4}$/.test(header)) throw new Error("Invalid Git packet");
     const len = parseInt(header, 16);
     if (!Number.isFinite(len) || len < 0 || len > 65520) throw new Error("Invalid Git packet");
     pos += 4;
@@ -53,7 +53,7 @@ export function parsePkts(bytes: Uint8Array) {
     lines.push(new TextDecoder().decode(bytes.slice(pos, pos + len - 4)));
     pos += len - 4;
   }
-  if(pos!==bytes.length) throw new Error('Incomplete Git packet');
+  if (pos !== bytes.length) throw new Error("Incomplete Git packet");
   return lines;
 }
 export async function uploadPack(data: RepoData, body: Uint8Array) {
@@ -141,16 +141,23 @@ export async function gitResponse(request: Request, id: string, service: "refs" 
       headers: { "WWW-Authenticate": 'Basic realm="OBH Git"', "Cache-Control": "no-store" },
     });
   try {
-    const parts:Uint8Array[]=[];
-    let size=0;
-    if(service==='pack' && request.body){
-      const reader=request.body.getReader();
-      for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>1000000){await reader.cancel();return new Response('Request too large',{status:413});}parts.push(value);}
+    const parts: Uint8Array[] = [];
+    let size = 0;
+    if (service === "pack" && request.body) {
+      const reader = request.body.getReader();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > 1000000) {
+          await reader.cancel();
+          return new Response("Request too large", { status: 413 });
+        }
+        parts.push(value);
+      }
     }
     const bytes =
-      service === "refs"
-        ? await advertise(data)
-        : await uploadPack(data, joinBytes(parts));
+      service === "refs" ? await advertise(data) : await uploadPack(data, joinBytes(parts));
     return new Response(bytes.slice().buffer, {
       headers: {
         "Content-Type":

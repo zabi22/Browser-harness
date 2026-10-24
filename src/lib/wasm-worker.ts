@@ -22,7 +22,10 @@ scope.onmessage = async ({ data: d }) => {
       wasi_snapshot_preview1: wasi.wasiImport,
     });
     const exports = instance.exports;
-    if (!(exports["memory"] instanceof WebAssembly.Memory) || typeof exports["_start"] !== "function")
+    if (
+      !(exports["memory"] instanceof WebAssembly.Memory) ||
+      typeof exports["_start"] !== "function"
+    )
       throw new Error("WASI program must export memory and _start");
     const exit = wasi.start(instance as unknown as Parameters<typeof wasi.start>[0]);
     scope.postMessage({ type: "exit", exit });

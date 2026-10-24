@@ -42,9 +42,9 @@ export function formatTokens(n: number): string {
   return `${n}`;
 }
 
-/** A single attached file may use at most half of the model's context window. */
+/** Half a known model window; otherwise a separate app upload budget, not a claimed provider limit. */
 export function fileTokenLimit(context: number): number {
-  return Math.floor(context * 0.5);
+  return Number.isFinite(context) && context > 0 ? Math.floor(context * 0.5) : 64_000;
 }
 
 /** Split text into pieces of at most `maxChars`, preferring line breaks. */

@@ -17,7 +17,9 @@ export function SkillsPanel({ skills, reload }: { skills: Skill[]; reload: () =>
     setBusy(true);
     try {
       const sk = await importSkillFromUrl(u);
-      toast.success(`Skill "${sk.name}" imported`);
+      toast.success(
+        `Skill "${sk.name}" imported disabled. Review its instructions before enabling it.`,
+      );
       setUrl("");
       reload();
     } catch (e) {
@@ -40,6 +42,14 @@ export function SkillsPanel({ skills, reload }: { skills: Skill[]; reload: () =>
             >
               <div className="min-w-0 flex-1">
                 <div className="truncate font-mono text-xs">{k.name}</div>
+                <details className="text-[11px] text-muted-foreground">
+                  <summary className="cursor-pointer">
+                    Review instructions · integrations unverified
+                  </summary>
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words pt-2">
+                    {k.content}
+                  </pre>
+                </details>
                 <div className="truncate text-[11px] text-muted-foreground">
                   {k.description || k.source || "—"}
                 </div>
@@ -48,7 +58,14 @@ export function SkillsPanel({ skills, reload }: { skills: Skill[]; reload: () =>
                 checked={k.enabled}
                 aria-label={`Enable ${k.name}`}
                 onCheckedChange={async (v) => {
-                  await supabase.from("skills").update({ enabled: v }).eq("id", k.id);
+                  const { error } = await supabase
+                    .from("skills")
+                    .update({ enabled: v })
+                    .eq("id", k.id);
+                  if (error) {
+                    toast.error("Could not update skill: " + error.message);
+                    return;
+                  }
                   reload();
                 }}
               />
@@ -56,7 +73,11 @@ export function SkillsPanel({ skills, reload }: { skills: Skill[]; reload: () =>
                 aria-label={`Delete ${k.name}`}
                 onClick={async () => {
                   if (!confirm(`Delete skill "${k.name}"?`)) return;
-                  await supabase.from("skills").delete().eq("id", k.id);
+                  const { error } = await supabase.from("skills").delete().eq("id", k.id);
+                  if (error) {
+                    toast.error("Could not delete skill: " + error.message);
+                    return;
+                  }
                   reload();
                 }}
                 className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive"

@@ -4,6 +4,8 @@
     "src/**/*.tsx",
     "vite.config.ts",
     "vitest.config.ts",
+    "playwright.config.ts",
+    "tests/**/*.ts",
     "eslint.config.js"
   ],
   "compilerOptions": {

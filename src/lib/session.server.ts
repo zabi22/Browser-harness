@@ -1,4 +1,5 @@
 // Server-only helpers shared by the studio's internal API routes.
+import { providerStatusMessage } from "./provider-errors.server";
 export const GATEWAY = "https://ai.gateway.lovable.dev/v1";
 
 export function jsonErr(status: number, message: string) {
@@ -30,13 +31,6 @@ export async function verifySession(request: Request): Promise<string | null> {
 }
 
 export async function upstreamError(res: Response) {
-  const text = await res.text().catch(() => "");
-  let message = `AI request failed (${res.status})`;
-  try {
-    const j = JSON.parse(text);
-    message = j.error?.message ?? j.message ?? message;
-  } catch {
-    /* keep default */
-  }
-  return jsonErr(res.status, message);
+  await res.body?.cancel();
+  return jsonErr(res.ok ? 502 : res.status, providerStatusMessage(res.status));
 }

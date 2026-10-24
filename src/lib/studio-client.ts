@@ -96,7 +96,7 @@ export const DEFAULT_SETTINGS: Settings = {
   fetchTool: true,
   mcpServers: [],
   visionTools: true,
-  permissionMode: "none",
+  permissionMode: "ask",
   permissionPresets: [],
   modelTimeout: 600,
   toolTimeout: 120,

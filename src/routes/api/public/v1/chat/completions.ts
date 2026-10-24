@@ -10,6 +10,7 @@ import {
   sha256Hex,
   shouldFallback,
 } from "@/lib/gateway.server";
+import { providerStatusMessage } from "@/lib/provider-errors.server";
 
 export const Route = createFileRoute("/api/public/v1/chat/completions")({
   server: {
@@ -78,6 +79,10 @@ export const Route = createFileRoute("/api/public/v1/chat/completions")({
           }
         }
         if (!upstream) return jsonError(502, "Upstream unavailable");
+        if (!upstream.ok) {
+          await upstream.body?.cancel();
+          return jsonError(upstream.status, providerStatusMessage(upstream.status));
+        }
 
         // 4. Pass through (JSON or SSE) preserving status
         const headers = new Headers(CORS_HEADERS);

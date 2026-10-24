@@ -26,3 +26,30 @@
 - Vercel/Cloudflare deployed runtime tests, deploy integrations and restore drills: not executed.
 
 Local logs under ignored `artifacts/` retain command details. Passing mocks and a build do not certify external connections or launch readiness.
+
+## Final development branch verification
+
+Final real Chrome suite: **7 passed**, including browser-native adapter pairing over CORS and a real fixture observation.
+
+| Check                                   | Result                                                                                                                                             |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit/integration suite                  | **275 passed, 34 test files**                                                                                                                      |
+| TypeScript                              | **Passed**, including application code, Playwright config and browser test sources                                                                 |
+| New browser/security modules ESLint     | **0 errors**; declaration-file matching emits an informational ignore warning when explicitly passed                                               |
+| Repository-wide ESLint                  | **Failed: 29 errors, 11 warnings** after formatting cleanup; legacy explicit-any, console-control regex, unused expression and related debt remain |
+| Default Vite/Nitro Cloudflare bundle    | **Passed**; deployed Cloudflare behavior is not certified                                                                                          |
+| Explicit `build:node` production bundle | **Passed**, Nitro `node-server` preset verified                                                                                                    |
+| Running Node production liveness        | **HTTP 200**, `{ "status": "ok" }`                                                                                                                 |
+| Running Node anonymous readiness        | **HTTP 401**, as required                                                                                                                          |
+| Secret scan                             | **0 potential findings** across safe project text and reachable text history at the recorded run; rerun before publication                         |
+| Whitespace/error checks                 | `git diff --check` passed                                                                                                                          |
+
+The real Chrome suite verifies desktop/mobile sign-in rendering and keyboard focus using mocked Supabase endpoints; live app health/auth boundaries; local browser DOM/screenshot/QA findings/tabs; redirect denial before another local origin is contacted; and pairing/origin/account/workspace checks. A browser-native adapter/CORS check additionally pairs the actual browser client to the local runner and reads a real fixture observation. The final browser test count is recorded in the PR verification report.
+
+Early fixture runs exposed two failures: cleanup tried to close an already-closed denied session, and an isolation test depended on another test's earlier pairing. Close is now idempotent, denied sessions become unavailable, and the owner test establishes its own session. Subsequent real browser runs passed. A new UI test typing issue (`exact` on Testing Library's role options) was corrected with an exact regular-expression name matcher.
+
+The browser-native transport check then exposed an actual Chrome-only `fetch` receiver error that injected Node fetch mocks did not catch. The default transport now calls `globalThis.fetch` through a wrapper so its receiver remains correct. That regression is covered by the real browser-origin pairing test.
+
+Reviewable evidence is under `docs/evidence/`: a real mobile fixture screenshot and local app desktop/mobile sign-in screenshots. Screenshots contain no authenticated account or provider credentials. Runtime QA reports, traces and pairing files remain ignored in `artifacts/`.
+
+Live provider inference, real Supabase signup/RLS/storage flows, database migration execution, cloud browsers, deployed Vercel/Cloudflare isolation and production restore drills remain unverified. This is not a full end-to-end production certification.

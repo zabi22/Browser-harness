@@ -31,8 +31,14 @@ export function ThinkingControls({
       <Switch
         aria-label={compact ? "Composer thinking" : "Model thinking"}
         checked={state.enabled}
-        disabled={disabled || !state.canDisable}
-        title={state.canDisable ? "Thinking" : "This model requires thinking"}
+        disabled={disabled || !state.canDisable || !state.efforts.length}
+        title={
+          !state.efforts.length
+            ? "Verified thinking controls are unavailable for this connection"
+            : state.canDisable
+              ? "Thinking"
+              : "This model requires thinking"
+        }
         onCheckedChange={(thinking) => onSettings({ thinking })}
       />
       <Select

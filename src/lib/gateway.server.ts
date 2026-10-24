@@ -69,6 +69,7 @@ export async function callUpstream(
       "X-Lovable-AIG-SDK": "fetch",
     },
     body: JSON.stringify(body),
+    redirect: "error",
     signal,
   });
 }

@@ -57,3 +57,9 @@ Recommendation: **NO-GO for production launch.** This checkpoint preserves and h
 - Establish monitoring, backup/restore drills, privacy/terms/acceptable-use review and operator release approval.
 
 No production database writes, destructive migrations, provider charges or public deployment occurred.
+
+## Verified development follow-up
+
+The pushed `main` checkpoint is preserved. On `feature/launch-readiness`, chat body/stream validation, config-only readiness, provider error redaction, safer tool defaults/deletion approvals, disabled-by-default skill imports, and a real experimental local Browser QA companion have been implemented. Unsupported video/music controls now show unavailable status and do not register model tools. Browser QA is described in [BROWSER_ENGINE.md](BROWSER_ENGINE.md); the full production harness remains **NO-GO**.
+
+Real local Chrome tests now cover snapshots, screenshots, tabs, mobile overflow, intentional JS/404/broken-image findings, redirected-network denial and pairing/scope checks. App desktop/mobile smoke checks use mocked Supabase endpoints. Full live authentication, database isolation, provider inference, cloud browser adapters and deployed runtime certification remain unverified. See the latest section of [TEST_RESULTS.md](TEST_RESULTS.md).

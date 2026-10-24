@@ -19,6 +19,8 @@ Review `drizzle/migrations/0001_restore_single_owner.sql` against the real datab
 
 The installed Lovable Vite wrapper supports Nitro target selection via `NITRO_PRESET` and host auto-detection. Build with the intended Node/Vercel target in CI and test actual streaming limits, abort handling, private Supabase storage and DNS-pinned fetch. Configure secrets in the hosting dashboard, HTTPS and request/concurrency limits. Do not assume a successful default build validates a Vercel deployment.
 
+The development branch adds the cross-platform `bun run build:node` script, which selects Nitro's `node-server` preset while preserving the default Lovable/Cloudflare build command. Its generated server was started locally and returned 200 for liveness and 401 for anonymous readiness. This does not certify Vercel-specific limits or deployed networking.
+
 Persistent files live in private Supabase storage, not ephemeral serverless disk. Linux and WASM processes run in browser workers, not persistent server processes. Browser guest memory/CPU depends on the user's device. Long provider streams remain subject to host execution limits.
 
 ## Cloudflare
@@ -28,6 +30,10 @@ The default Nitro build produces a Cloudflare worker bundle and has compiled loc
 ## Health, backups and recovery
 
 Dedicated health/readiness endpoints are not implemented in this checkpoint. Add liveness without secrets and authenticated/config-only readiness before launch; do not make billable inference part of health polling.
+
+Development branch update: `/api/health` now provides no-store process liveness; `/api/ready` requires a verified bearer session and reports configuration-only status. It explicitly does not certify provider inference or all database/storage behavior.
+
+The development branch also includes an experimental personal local Playwright companion; see [BROWSER_ENGINE.md](BROWSER_ENGINE.md). It requires development dependencies, Chrome and Node 22.18+ (24 LTS recommended). It is started explicitly on the user's device, not deployed inside Vercel/Cloudflare app functions. Cloudflare Browser Run and hosted browser containers remain unconfigured and untested.
 
 Use the existing password-encrypted account backup and workspace exports. Also back up database schema/data, private storage, encrypted provider rows and matching server encryption key versions through separate access-controlled operator backups. Test recovery into a separate staging project; do not overwrite production as a test. Interrupted replies retain recovery journals and require user consent to resume.
 

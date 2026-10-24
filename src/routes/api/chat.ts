@@ -8,6 +8,7 @@ import { chatRequestSchema } from "@/lib/chat-request";
 import { readRequestJson, RequestBodyError } from "@/lib/request-body.server";
 import { readSse } from "@/lib/sse";
 import { streamTerminal } from "@/lib/stream-terminal";
+import { providerStatusMessage, redactProviderError } from "@/lib/provider-errors.server";
 
 // Internal (non-public) streaming proxy for the studio. Requires the owner's session token.
 
@@ -62,15 +63,8 @@ export const Route = createFileRoute("/api/chat")({
           return err(502, "AI service unreachable");
         }
         if (!upstream.ok || !upstream.body) {
-          const text = await upstream.text().catch(() => "");
-          let message = `AI request failed (${upstream.status})`;
-          try {
-            const j = JSON.parse(text);
-            message = j.error?.message ?? j.message ?? message;
-          } catch {
-            /* keep default */
-          }
-          return err(upstream.status, message);
+          await upstream.body?.cancel();
+          return err(upstream.ok ? 502 : upstream.status, providerStatusMessage(upstream.status));
         }
 
         const enc = new TextEncoder();
@@ -133,7 +127,8 @@ export const Route = createFileRoute("/api/chat")({
               const res = await pump(firstBody);
               if (res.error) {
                 console.error("[api/chat] upstream returned a terminal error");
-                send(res.refusal ? { error: res.error, refusal: true } : { error: res.error });
+                const message = redactProviderError(res.error, up);
+                send(res.refusal ? { error: message, refusal: true } : { error: message });
               } else if (!sentAny) {
                 console.error("[api/chat] upstream stream produced no events");
                 send({

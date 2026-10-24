@@ -14,7 +14,11 @@ export interface Skill {
 }
 
 export const slugName = (s: string) =>
-  s.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 64);
+  s
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
 
 /** Turn a GitHub URL into raw.githubusercontent.com candidates. Repo roots resolve to SKILL.md on main/master. */
 export function githubRawCandidates(url: string): string[] {
@@ -24,7 +28,9 @@ export function githubRawCandidates(url: string): string[] {
     if (u.hostname !== "github.com" && u.hostname !== "www.github.com") return [url];
     const parts = u.pathname.split("/").filter(Boolean);
     if (parts.length >= 5 && parts[2] === "blob")
-      return [`https://raw.githubusercontent.com/${parts[0]}/${parts[1]}/${parts[3]}/${parts.slice(4).join("/")}`];
+      return [
+        `https://raw.githubusercontent.com/${parts[0]}/${parts[1]}/${parts[3]}/${parts.slice(4).join("/")}`,
+      ];
     if (parts.length === 2)
       return [
         `https://raw.githubusercontent.com/${parts[0]}/${parts[1]}/main/SKILL.md`,
@@ -37,7 +43,10 @@ export function githubRawCandidates(url: string): string[] {
 }
 
 /** Parse SKILL.md frontmatter (name, description) from markdown text. */
-export function parseSkill(text: string, fallbackName: string): { name: string; description: string; content: string } {
+export function parseSkill(
+  text: string,
+  fallbackName: string,
+): { name: string; description: string; content: string } {
   let name = fallbackName;
   let description = "";
   const m = /^---\s*\n([\s\S]*?)\n---\s*\n?/.exec(text);
@@ -50,7 +59,11 @@ export function parseSkill(text: string, fallbackName: string): { name: string; 
       else description = val;
     }
   }
-  return { name: slugName(name) || fallbackName, description: description || "Imported skill", content: text.trim() };
+  return {
+    name: slugName(name) || fallbackName,
+    description: description || "Imported skill",
+    content: text.trim(),
+  };
 }
 
 /** Download a SKILL.md (GitHub link or raw URL), parse it, and save it as the user's skill. */
@@ -81,10 +94,22 @@ export async function importSkillFromUrl(url: string, nameOverride?: string): Pr
   const sk = parseSkill(text, fallback);
   const { data: au } = await supabase.auth.getUser();
   if (!au.user) throw new Error("Not signed in");
-  const { error } = await supabase.from("skills").upsert(
-    { user_id: au.user.id, name: sk.name, description: sk.description, content: sk.content, source: url },
-    { onConflict: "user_id,name" },
-  );
+  const { data, error } = await supabase
+    .from("skills")
+    .upsert(
+      {
+        user_id: au.user.id,
+        name: sk.name,
+        description: sk.description,
+        content: sk.content,
+        source: url,
+        enabled: false,
+      },
+      { onConflict: "user_id,name" },
+    )
+    .select()
+    .single();
   if (error) throw error;
-  return { id: "", ...sk, source: url, enabled: true };
+  if (!data) throw new Error("Skill import did not return a saved record");
+  return { id: data.id, ...sk, source: url, enabled: false };
 }

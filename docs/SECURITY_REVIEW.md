@@ -25,3 +25,13 @@ Status: **incomplete; production NO-GO**. This is an engineering review, not ind
 - DNS-pinned transport requires a compatible Node runtime; deployed Cloudflare support remains unverified and must not be advertised based on compilation alone.
 
 Deleting a saved credential removes the application's stored copy; revoke the actual provider key at the provider when full external revocation is needed.
+
+## Browser development branch review
+
+The local companion is bound to loopback, accepts the exact app Origin/Host and a process-specific pairing token, and checks account/workspace/session labels on every operation. Pairing never grants a hosted multi-tenant security guarantee: labels are client-supplied and the companion is for one user's workstation. A cloud adapter needs server-verified authentication and ownership, isolated execution credentials and hardened per-tenant infrastructure.
+
+Real Chrome tests verified a blocked redirect did not contact a second local origin, and rejected invalid token/origin/owner/workspace. Browser contexts are fresh, the Chrome sandbox stays enabled, app/provider environment variables are excluded, downloads/service workers are disabled and exposed operations do not accept scripts/forms/cookies. The egress proxy uses validated pinned DNS and an exact target origin, with explicit loopback target opt-in for owned development sites. OS-level hard memory/CPU quotas, comprehensive browser egress review and hosted isolation remain open.
+
+New chat bodies and SSE frames are bounded and validated; incomplete upstream streams no longer become success. Raw provider HTTP errors are not forwarded, known credentials are redacted from stream errors, and raw provider error bodies are not logged. Media multipart size enforcement/cancellation and full platform spending controls still need review.
+
+Fresh settings now Ask before risky tool operations; workspace deletion/build/publication cannot be auto-approved by YOLO. Imported skill content remains disabled for review and cannot grant runtime permissions. Skill dependencies, trust versioning and MCP authentication-header storage remain unresolved (MCP settings are browser-visible and are not covered by the provider-key encryption changes).

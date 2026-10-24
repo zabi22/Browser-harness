@@ -1,22 +1,10 @@
 import { getModel, resolveThinking } from "@/lib/models";
 import { DIDNT_REPLY } from "./reply-continuation";
 import { nativeModelId } from "./provider-keys.server";
+import type { InBody, ToolCall, ToolDef } from './chat-request';
+export type { InBody } from './chat-request';
 
 // Translate the studio's neutral chat/tool format to each provider and parse their streams back.
-interface ToolCall { id: string; name: string; args: string; meta?: unknown }
-interface ToolDef { name: string; description?: string; parameters?: Record<string, unknown> }
-interface InMsg {
-  role: "user" | "assistant" | "tool"; content: string; images?: string[];
-  /** assistant: tool calls it made. tool: which call this result answers. */
-  toolCalls?: ToolCall[]; toolCallId?: string; name?: string;
-}
-export interface InBody {
-  model: string;
-  system?: string;
-  messages: InMsg[];
-  tools?: ToolDef[];
-  params?: { temperature?: number; maxTokens?: number; frequencyPenalty?: number; presencePenalty?: number; thinking?: boolean; thinkingEffort?: string };
-}
 
 export function err(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), { status, headers: { "Content-Type": "application/json" } });

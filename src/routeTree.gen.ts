@@ -15,8 +15,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiFetchRouteImport } from './routes/api/fetch'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiMediaRouteImport } from './routes/api/media'
 import { Route as ApiProvidersRouteImport } from './routes/api/providers'
+import { Route as ApiReadyRouteImport } from './routes/api/ready'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as AuthenticatedStudioChar123ChatIdChar125RouteImport } from './routes/_authenticated/studio.{-$chatId}'
 import { Route as ApiPublicGitRepoIdGitUploadPackRouteImport } from './routes/api/public/git/$repoId.git-upload-pack'
@@ -52,6 +54,11 @@ const ApiFetchRoute = ApiFetchRouteImport.update({
   path: '/api/fetch',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMediaRoute = ApiMediaRouteImport.update({
   id: '/api/media',
   path: '/api/media',
@@ -60,6 +67,11 @@ const ApiMediaRoute = ApiMediaRouteImport.update({
 const ApiProvidersRoute = ApiProvidersRouteImport.update({
   id: '/api/providers',
   path: '/api/providers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiReadyRoute = ApiReadyRouteImport.update({
+  id: '/api/ready',
+  path: '/api/ready',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSearchRoute = ApiSearchRouteImport.update({
@@ -98,8 +110,10 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/fetch': typeof ApiFetchRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/media': typeof ApiMediaRoute
   '/api/providers': typeof ApiProvidersRoute
+  '/api/ready': typeof ApiReadyRoute
   '/api/search': typeof ApiSearchRoute
   '/studio/{-$chatId}': typeof AuthenticatedStudioChar123ChatIdChar125Route
   '/api/public/git/$repoId/git-upload-pack': typeof ApiPublicGitRepoIdGitUploadPackRoute
@@ -112,8 +126,10 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/fetch': typeof ApiFetchRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/media': typeof ApiMediaRoute
   '/api/providers': typeof ApiProvidersRoute
+  '/api/ready': typeof ApiReadyRoute
   '/api/search': typeof ApiSearchRoute
   '/studio/{-$chatId}': typeof AuthenticatedStudioChar123ChatIdChar125Route
   '/api/public/git/$repoId/git-upload-pack': typeof ApiPublicGitRepoIdGitUploadPackRoute
@@ -128,8 +144,10 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/fetch': typeof ApiFetchRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/media': typeof ApiMediaRoute
   '/api/providers': typeof ApiProvidersRoute
+  '/api/ready': typeof ApiReadyRoute
   '/api/search': typeof ApiSearchRoute
   '/_authenticated/studio/{-$chatId}': typeof AuthenticatedStudioChar123ChatIdChar125Route
   '/api/public/git/$repoId/git-upload-pack': typeof ApiPublicGitRepoIdGitUploadPackRoute
@@ -144,8 +162,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/chat'
     | '/api/fetch'
+    | '/api/health'
     | '/api/media'
     | '/api/providers'
+    | '/api/ready'
     | '/api/search'
     | '/studio/{-$chatId}'
     | '/api/public/git/$repoId/git-upload-pack'
@@ -158,8 +178,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/chat'
     | '/api/fetch'
+    | '/api/health'
     | '/api/media'
     | '/api/providers'
+    | '/api/ready'
     | '/api/search'
     | '/studio/{-$chatId}'
     | '/api/public/git/$repoId/git-upload-pack'
@@ -173,8 +195,10 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/api/chat'
     | '/api/fetch'
+    | '/api/health'
     | '/api/media'
     | '/api/providers'
+    | '/api/ready'
     | '/api/search'
     | '/_authenticated/studio/{-$chatId}'
     | '/api/public/git/$repoId/git-upload-pack'
@@ -188,8 +212,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiFetchRoute: typeof ApiFetchRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiMediaRoute: typeof ApiMediaRoute
   ApiProvidersRoute: typeof ApiProvidersRoute
+  ApiReadyRoute: typeof ApiReadyRoute
   ApiSearchRoute: typeof ApiSearchRoute
   ApiPublicGitRepoIdGitUploadPackRoute: typeof ApiPublicGitRepoIdGitUploadPackRoute
   ApiPublicV1ChatCompletionsRoute: typeof ApiPublicV1ChatCompletionsRoute
@@ -240,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiFetchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/media': {
       id: '/api/media'
       path: '/api/media'
@@ -252,6 +285,13 @@ declare module '@tanstack/react-router' {
       path: '/api/providers'
       fullPath: '/api/providers'
       preLoaderRoute: typeof ApiProvidersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ready': {
+      id: '/api/ready'
+      path: '/api/ready'
+      fullPath: '/api/ready'
+      preLoaderRoute: typeof ApiReadyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/search': {
@@ -312,8 +352,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiChatRoute: ApiChatRoute,
   ApiFetchRoute: ApiFetchRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiMediaRoute: ApiMediaRoute,
   ApiProvidersRoute: ApiProvidersRoute,
+  ApiReadyRoute: ApiReadyRoute,
   ApiSearchRoute: ApiSearchRoute,
   ApiPublicGitRepoIdGitUploadPackRoute: ApiPublicGitRepoIdGitUploadPackRoute,
   ApiPublicV1ChatCompletionsRoute: ApiPublicV1ChatCompletionsRoute,

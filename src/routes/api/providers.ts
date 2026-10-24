@@ -6,14 +6,24 @@ import { userUpstream } from "@/lib/provider-keys.server";
 import { providerFetch } from "@/lib/provider-http.server";
 import { parseOpenRouterModels, parseCompatibleModels } from "@/lib/model-discovery";
 import { readBounded } from "@/lib/public-fetch.server";
+import { readRequestJson, RequestBodyError } from "@/lib/request-body.server";
 export const Route = createFileRoute("/api/providers")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         if (!(await verifySession(request))) return jsonErr(401, "Not signed in");
+        let input: unknown;
+        try {
+          input = await readRequestJson(request, 4096);
+        } catch (error) {
+          return jsonErr(
+            error instanceof RequestBodyError ? error.status : 400,
+            "Invalid provider request body",
+          );
+        }
         const parsed = z
           .object({ provider: z.enum(KEY_PROVIDERS), action: z.enum(["test", "models"]) })
-          .safeParse(await request.json().catch(() => null));
+          .safeParse(input);
         if (!parsed.success) return jsonErr(400, "Invalid provider request");
         const { provider, action } = parsed.data;
         const up = await userUpstream(request, provider);

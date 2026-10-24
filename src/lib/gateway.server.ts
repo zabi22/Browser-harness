@@ -56,7 +56,11 @@ export function shouldFallback(status: number | null) {
   return status === null || status === 429 || status >= 500;
 }
 
-export async function callUpstream(body: Record<string, unknown>, apiKey: string, signal: AbortSignal) {
+export async function callUpstream(
+  body: Record<string, unknown>,
+  apiKey: string,
+  signal: AbortSignal,
+) {
   return fetch(UPSTREAM, {
     method: "POST",
     headers: {
@@ -65,6 +69,7 @@ export async function callUpstream(body: Record<string, unknown>, apiKey: string
       "X-Lovable-AIG-SDK": "fetch",
     },
     body: JSON.stringify(body),
+    redirect: "error",
     signal,
   });
 }

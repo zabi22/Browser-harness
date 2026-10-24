@@ -30,17 +30,24 @@ export function PermissionControls({
   const [open, setOpen] = useState(false),
     [name, setName] = useState(""),
     [rules, setRules] = useState(defaultRules),
-    [editing,setEditing]=useState<string|null>(null);
-  const configure=()=>{
-    const preset=settings.permissionPresets.find(p=>p.id===settings.permissionMode);
-    setEditing(preset?.id??null);setName(preset?.name??'');setRules(preset?.rules??defaultRules());setOpen(true);
+    [editing, setEditing] = useState<string | null>(null);
+  const configure = () => {
+    const preset = settings.permissionPresets.find((p) => p.id === settings.permissionMode);
+    setEditing(preset?.id ?? null);
+    setName(preset?.name ?? "");
+    setRules(preset?.rules ?? defaultRules());
+    setOpen(true);
   };
   return (
     <div className="flex min-w-0 items-center gap-1">
       <Select
         disabled={disabled}
         value={settings.permissionMode ?? "none"}
-        onValueChange={(v) => (v === "custom" ? (setEditing(null),setName(''),setRules(defaultRules()),setOpen(true)) : onSettings({ permissionMode: v }))}
+        onValueChange={(v) =>
+          v === "custom"
+            ? (setEditing(null), setName(""), setRules(defaultRules()), setOpen(true))
+            : onSettings({ permissionMode: v })
+        }
       >
         <SelectTrigger className="h-7 w-32 text-xs" aria-label="Agent permissions">
           <Shield className="h-3 w-3" />
@@ -99,15 +106,28 @@ export function PermissionControls({
             </div>
           ))}
           <DialogFooter>
-            {editing&&<Button variant="destructive" onClick={()=>{onSettings({permissionMode:'none',permissionPresets:settings.permissionPresets.filter(p=>p.id!==editing)});setOpen(false);}}>Delete configuration</Button>}
+            {editing && (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  onSettings({
+                    permissionMode: "none",
+                    permissionPresets: settings.permissionPresets.filter((p) => p.id !== editing),
+                  });
+                  setOpen(false);
+                }}
+              >
+                Delete configuration
+              </Button>
+            )}
             <Button
               disabled={!name.trim()}
               onClick={() => {
-                const id = editing??crypto.randomUUID();
+                const id = editing ?? crypto.randomUUID();
                 onSettings({
                   permissionMode: id,
                   permissionPresets: [
-                    ...(settings.permissionPresets ?? []).filter(p=>p.id!==id),
+                    ...(settings.permissionPresets ?? []).filter((p) => p.id !== id),
                     { id, name: name.trim(), rules },
                   ],
                 });

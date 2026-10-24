@@ -16,14 +16,15 @@ export const subscribeProcesses = (f: () => void) => {
     listeners.delete(f);
   };
 };
-export const listProcesses = (owner?:string) => [...processes.values()].filter(p=>!owner||p.owner===owner).map(({ worker, ...p }) => p);
+export const listProcesses = (owner?: string) =>
+  [...processes.values()].filter((p) => !owner || p.owner === owner).map(({ worker, ...p }) => p);
 export function startProcess(
   name: string,
   bytes: Uint8Array,
   args: string[] = [],
   stdin = "",
   timeout = 120,
-  owner = '',
+  owner = "",
 ) {
   if (bytes.length > 16000000) throw new Error("WASM binary exceeds 16 MB");
   if ([...processes.values()].filter((p) => p.state === "running").length >= 4)
@@ -64,11 +65,15 @@ export function stopProcess(id: string) {
   notify();
   return "Process stopped";
 }
-export function controlProcess(id: string, action: string, owner?:string) {
-  if(owner&&processes.get(id)?.owner!==owner)throw new Error('Process belongs to another session');
+export function controlProcess(id: string, action: string, owner?: string) {
+  if (owner && processes.get(id)?.owner !== owner)
+    throw new Error("Process belongs to another session");
   if (action === "stop") return stopProcess(id);
   if (action === "pause" || action === "resume")
     return "Pause/resume is not supported by synchronous WASI programs; stop and restart instead.";
   throw new Error("stdin is supplied at startup; live input is not supported by this WASI runtime");
 }
-export function stopSessionProcesses(owner:string){for(const p of processes.values())if(p.owner===owner&&p.state==='running')stopProcess(p.id);}
+export function stopSessionProcesses(owner: string) {
+  for (const p of processes.values())
+    if (p.owner === owner && p.state === "running") stopProcess(p.id);
+}

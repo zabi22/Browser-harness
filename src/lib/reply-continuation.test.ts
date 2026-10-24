@@ -4,7 +4,9 @@ import { recoveryMessages as rm } from "./run-recovery";
 d2("continue marker", () => {
   i2("continuation and resume turns start with [Continue response]", () => {
     e2(cm("", "")[1]!.content.startsWith(CR)).toBe(true);
-    e2(rm({ role: "assistant", content: "", attachments: [] } as never)[1]!.content.startsWith(CR)).toBe(true);
+    e2(
+      rm({ role: "assistant", content: "", attachments: [] } as never)[1]!.content.startsWith(CR),
+    ).toBe(true);
   });
 });
 

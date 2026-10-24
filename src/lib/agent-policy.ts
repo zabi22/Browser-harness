@@ -3,11 +3,13 @@ export const CAPABILITIES = {
   shell: "Offline Linux commands",
   filesRead: "Read workspace files",
   filesWrite: "Write and edit files",
+  filesDelete: "Delete workspace files",
   cloudSync: "Cloud file pull / push",
   skills: "Load saved skills",
   media: "Enabled image / video generation",
   fetch: "Fetch public URLs",
   mcp: "MCP connections and tools",
+  browser: "Read-only local browser actions",
   skillImport: "Import skills",
   network: "Linux networking",
   restart: "Restart Linux",
@@ -36,7 +38,7 @@ const baseline = new Set<Capability>([
   "media",
 ]);
 /** Actions that always need an explicit click: never auto-approved, not even by YOLO or a custom preset. */
-export const ALWAYS_ASK = new Set<Capability>(["build", "publish"]);
+export const ALWAYS_ASK = new Set<Capability>(["build", "publish", "filesDelete"]);
 export function decision(
   mode: PermissionMode,
   capability: Capability,
@@ -45,8 +47,14 @@ export function decision(
   const d = rawDecision(mode, capability, presets);
   return ALWAYS_ASK.has(capability) && d === "yes" ? "ask" : d;
 }
-function rawDecision(mode: PermissionMode, capability: Capability, presets: PermissionPreset[]): Decision {
+function rawDecision(
+  mode: PermissionMode,
+  capability: Capability,
+  presets: PermissionPreset[],
+): Decision {
   if (mode === "yolo") return "yes";
+  if (mode === "ask" && ["shell", "filesWrite", "cloudSync", "media"].includes(capability))
+    return "ask";
   if (mode === "none" || mode === "ask")
     return baseline.has(capability) ? "yes" : mode === "ask" ? "ask" : "no";
   return presets.find((p) => p.id === mode)?.rules[capability] ?? "no";

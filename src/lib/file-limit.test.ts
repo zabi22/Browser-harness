@@ -12,4 +12,8 @@ describe("file size limits", () => {
     expect(parts.map((p) => p.length)).toEqual([1000, 1000, 500]);
     expect(parts.join("")).toBe(t);
   });
+  it("keeps a finite app upload budget when provider context is unknown", () => {
+    expect(fileTokenLimit(0)).toBe(64000);
+    expect(fileTokenLimit(Number.NaN)).toBe(64000);
+  });
 });

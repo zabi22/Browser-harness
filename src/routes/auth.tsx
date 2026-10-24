@@ -14,7 +14,10 @@ export const Route = createFileRoute("/auth")({
       { title: "Sign in — OBH" },
       { name: "description", content: "Sign in to your private Open Browser Harness studio." },
       { property: "og:title", content: "Sign in — OBH" },
-      { property: "og:description", content: "Sign in to your private Open Browser Harness studio." },
+      {
+        property: "og:description",
+        content: "Sign in to your private Open Browser Harness studio.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -39,7 +42,8 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/studio/{-$chatId}", params: { chatId: undefined }, replace: true });
+      if (data.session)
+        navigate({ to: "/studio/{-$chatId}", params: { chatId: undefined }, replace: true });
     });
     const { data } = supabase.auth.onAuthStateChange((_e, s) => {
       if (s) navigate({ to: "/studio/{-$chatId}", params: { chatId: undefined }, replace: true });
@@ -62,20 +66,28 @@ function AuthPage() {
     if (res.error) {
       const closed = mode === "up" && /registration closed|database error/i.test(res.error.message);
       toast.error(closed ? "Registration Closed" : res.error.message);
-      if (closed) { setOpen(false); setMode("in"); }
+      if (closed) {
+        setOpen(false);
+        setMode("in");
+      }
       return;
     }
-    if (mode === "up" && !res.data.session) toast.success("Check your email to confirm your account.");
+    if (mode === "up" && !res.data.session)
+      toast.success("Check your email to confirm your account.");
   }
 
   async function oauth(provider: "google" | "lovable") {
-    const r = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin + "/auth" });
+    const r = await lovable.auth.signInWithOAuth(provider, {
+      redirect_uri: window.location.origin + "/auth",
+    });
     if (r.error) toast.error(r.error.message);
   }
 
   return (
     <main className="flex min-h-screen flex-col bg-background px-6 py-8">
-      <div className="font-display text-3xl">Harness<span className="ml-3 font-sans text-xs text-muted-foreground">Private studio</span></div>
+      <div className="font-display text-3xl">
+        Harness<span className="ml-3 font-sans text-xs text-muted-foreground">Private studio</span>
+      </div>
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center space-y-6 py-12">
         <div>
           <div className="mb-3 text-[10px] text-muted-foreground">OPEN BROWSER HARNESS</div>
@@ -83,11 +95,17 @@ function AuthPage() {
             {mode === "in" ? "Sign in" : "Create account"}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {open ? "No owner yet — the first account created owns this studio." : "Private studio. Only the owner can sign in."}
+            {open
+              ? "No owner yet — the first account created owns this studio."
+              : "Private studio. Only the owner can sign in."}
           </p>
         </div>
         <div className="space-y-2">
-          <button type="button" className="lovable-auth-button w-full" onClick={() => oauth("lovable")}>
+          <button
+            type="button"
+            className="lovable-auth-button w-full"
+            onClick={() => oauth("lovable")}
+          >
             Continue with Lovable
           </button>
           <Button variant="outline" className="w-full" onClick={() => oauth("google")}>
@@ -97,11 +115,24 @@ function AuthPage() {
         <form onSubmit={submit} className="space-y-3">
           <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="pw">Password</Label>
-            <Input id="pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input
+              id="pw"
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
           <Button type="submit" className="w-full" disabled={busy}>
             {mode === "in" ? "Sign in" : "Sign up"}
@@ -112,13 +143,15 @@ function AuthPage() {
             Registration Closed
           </div>
         )}
-        {open && <button
-          type="button"
-          className="text-sm text-muted-foreground underline"
-          onClick={() => setMode(mode === "in" ? "up" : "in")}
-        >
-          {mode === "in" ? "No account? Sign up" : "Have an account? Sign in"}
-        </button>}
+        {open && (
+          <button
+            type="button"
+            className="text-sm text-muted-foreground underline"
+            onClick={() => setMode(mode === "in" ? "up" : "in")}
+          >
+            {mode === "in" ? "No account? Sign up" : "Have an account? Sign in"}
+          </button>
+        )}
       </div>
     </main>
   );

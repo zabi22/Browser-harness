@@ -7,7 +7,11 @@ import { mathOptions, normalizeMath } from "./markdown-math";
 function mathValues(text: string): string[] {
   const parser = unified().use(remarkParse).use(remarkMath, mathOptions);
   const values: string[] = [];
-  interface Node { type: string; value?: string; children?: Node[] }
+  interface Node {
+    type: string;
+    value?: string;
+    children?: Node[];
+  }
   function walk(node: Node) {
     if (node.type === "math" || node.type === "inlineMath") values.push(node.value ?? "");
     node.children?.forEach(walk);
@@ -21,7 +25,11 @@ describe("math and currency delimiters", () => {
     expect(mathValues("It costs $25 USD, or $50 for two; $1,000.50 total.")).toEqual([]);
   });
   it("parses single-dollar equations", () => {
-    expect(mathValues("$x + y$ and $E=mc^2$ and $\\frac{1}{2}$")).toEqual(["x + y", "E=mc^2", "\\frac{1}{2}"]);
+    expect(mathValues("$x + y$ and $E=mc^2$ and $\\frac{1}{2}$")).toEqual([
+      "x + y",
+      "E=mc^2",
+      "\\frac{1}{2}",
+    ]);
   });
   it("keeps money literal beside dollar equations", () => {
     expect(mathValues("$25 USD and $x$ and $50 USD; $2 + 2 = 4$.")).toEqual(["x", "2 + 2 = 4"]);

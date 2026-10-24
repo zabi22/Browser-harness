@@ -68,8 +68,12 @@ export class LinuxEnvironment {
     });
   }
   async start(): Promise<void> {
-    if (this.worker && this.state === "paused") { await this.resume(); return; }
-    if (this.state === "conflict") throw new Error(this.error || "Resolve the disk conflict before running commands");
+    if (this.worker && this.state === "paused") {
+      await this.resume();
+      return;
+    }
+    if (this.state === "conflict")
+      throw new Error(this.error || "Resolve the disk conflict before running commands");
     if (this.worker && ["running", "unsynced", "checkpointing"].includes(this.state)) return;
     if (this.booting) return this.booting;
     this.booting = this.boot();
@@ -81,7 +85,7 @@ export class LinuxEnvironment {
   }
   private async boot() {
     this.set("starting");
-    this.output='';
+    this.output = "";
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Not signed in");
@@ -159,7 +163,12 @@ export class LinuxEnvironment {
         });
         // Warm boot from the preloaded starter RAM state only when no saved disk
         // overlay exists; a saved disk must win so user changes are never lost.
-        this.worker?.postMessage({ action: "boot", snapshot: saved, warm: !saved, memory: this.memoryMib });
+        this.worker?.postMessage({
+          action: "boot",
+          snapshot: saved,
+          warm: !saved,
+          memory: this.memoryMib,
+        });
       });
       this.timer = setInterval(() => {
         if (this.state === "running") void this.checkpoint(false).catch(() => {});
@@ -204,8 +213,8 @@ export class LinuxEnvironment {
   }
   private async saveCheckpoint(cloud: boolean) {
     if (!this.worker || !["running", "unsynced", "paused"].includes(this.state)) return;
-    const paused=this.state==='paused';
-    if(paused)await this.resume();
+    const paused = this.state === "paused";
+    if (paused) await this.resume();
     this.set("checkpointing");
     try {
       await this.rpc("exec", { command: "sync", timeout: 30 });
@@ -214,7 +223,7 @@ export class LinuxEnvironment {
       await (await getDb()).put("disks", { ...snap, revision: this.revision, dirty: true }, key);
       if (!cloud) {
         this.set("running");
-        if(paused)await this.pause();
+        if (paused) await this.pause();
         return;
       }
       const { data: current, error: ce } = await supabase
@@ -262,22 +271,29 @@ export class LinuxEnvironment {
             .select("revision")
             .maybeSingle()
         : await supabase.from("environment_manifests").insert(row).select("revision").single();
-      if (result.error || !result.data){
-        const {data:latest,error:readError}=await supabase.from('environment_manifests').select('revision').eq('workspace_id',this.workspace).maybeSingle();
-        if(!readError&&(latest?.revision??null)!==this.revision){this.set('conflict','Disk changed during save; local checkpoint preserved');return;}
-        throw new Error(result.error?.message??'Disk save failed; local checkpoint preserved');
+      if (result.error || !result.data) {
+        const { data: latest, error: readError } = await supabase
+          .from("environment_manifests")
+          .select("revision")
+          .eq("workspace_id", this.workspace)
+          .maybeSingle();
+        if (!readError && (latest?.revision ?? null) !== this.revision) {
+          this.set("conflict", "Disk changed during save; local checkpoint preserved");
+          return;
+        }
+        throw new Error(result.error?.message ?? "Disk save failed; local checkpoint preserved");
       }
       this.revision = revision;
       await (await getDb()).put("disks", { ...snap, revision, dirty: false }, key);
       this.set("running");
-      if(paused)await this.pause();
+      if (paused) await this.pause();
     } catch (e) {
       this.set("unsynced", (e as Error).message);
       throw e;
     }
   }
   async restart() {
-    if(this.state==='paused')await this.resume();
+    if (this.state === "paused") await this.resume();
     await this.checkpoint();
     if (this.state === "conflict" || this.state === "unsynced")
       throw new Error("Save disk before restarting");
@@ -286,16 +302,17 @@ export class LinuxEnvironment {
     return "Linux restarted from the saved disk. Continue the task.";
   }
   async captureState(): Promise<ArrayBuffer> {
-    if (!this.worker || this.state !== "running") throw new Error("Linux must be running to capture its state");
+    if (!this.worker || this.state !== "running")
+      throw new Error("Linux must be running to capture its state");
     return this.rpc("capture-state");
   }
   async pause() {
     await this.rpc("pause");
-    this.set('paused');
+    this.set("paused");
   }
   async resume() {
     await this.rpc("resume");
-    this.set('running');
+    this.set("running");
   }
   stop() {
     clearInterval(this.timer);

@@ -1,9 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { prepareBackupRestore, remapWorkspaceBackup, type BackupData, type BackupFile } from "./backup-data";
+import {
+  prepareBackupRestore,
+  remapWorkspaceBackup,
+  type BackupData,
+  type BackupFile,
+} from "./backup-data";
 import { blobToDataUrl, listFiles, readBlob, writeFile } from "./workspace-fs";
 
-type Table = "conversations" | "messages" | "prompts" | "workspaces" | "skills" | "git_repositories";
+type Table =
+  "conversations" | "messages" | "prompts" | "workspaces" | "skills" | "git_repositories";
 
 async function fetchAll(table: Table, filter?: { col: string; ids: string[] }) {
   const out: any[] = [];
@@ -21,8 +27,14 @@ async function fetchAll(table: Table, filter?: { col: string; ids: string[] }) {
 
 async function collectFiles(workspaceIds: string[]): Promise<BackupFile[]> {
   const out: BackupFile[] = [];
-  for (const ws of workspaceIds) for (const f of await listFiles(ws))
-    out.push({ workspace_id: ws, path: f.path, mime: f.mime, data: await blobToDataUrl(await readBlob(ws, f.path)) });
+  for (const ws of workspaceIds)
+    for (const f of await listFiles(ws))
+      out.push({
+        workspace_id: ws,
+        path: f.path,
+        mime: f.mime,
+        data: await blobToDataUrl(await readBlob(ws, f.path)),
+      });
   return out;
 }
 
@@ -30,18 +42,47 @@ async function collectFiles(workspaceIds: string[]): Promise<BackupFile[]> {
 export async function collectBackup(workspaceId?: string): Promise<BackupData> {
   if (workspaceId) {
     const workspaces = await fetchAll("workspaces", { col: "id", ids: [workspaceId] });
-    const conversations = await fetchAll("conversations", { col: "workspace_id", ids: [workspaceId] });
-    const messages = await fetchAll("messages", { col: "conversation_id", ids: conversations.map((c) => c.id) });
+    const conversations = await fetchAll("conversations", {
+      col: "workspace_id",
+      ids: [workspaceId],
+    });
+    const messages = await fetchAll("messages", {
+      col: "conversation_id",
+      ids: conversations.map((c) => c.id),
+    });
     const git = await fetchAll("git_repositories", { col: "workspace_id", ids: [workspaceId] });
-    return { kind: "workspace", workspaces, conversations, messages, git, prompts: [], files: await collectFiles([workspaceId]), settings: null };
+    return {
+      kind: "workspace",
+      workspaces,
+      conversations,
+      messages,
+      git,
+      prompts: [],
+      files: await collectFiles([workspaceId]),
+      settings: null,
+    };
   }
   const [workspaces, conversations, messages, prompts, skills, git, settings] = await Promise.all([
-    fetchAll("workspaces"), fetchAll("conversations"), fetchAll("messages"), fetchAll("prompts"),
-    fetchAll("skills"), fetchAll("git_repositories"), supabase.from("studio_settings").select("data").maybeSingle(),
+    fetchAll("workspaces"),
+    fetchAll("conversations"),
+    fetchAll("messages"),
+    fetchAll("prompts"),
+    fetchAll("skills"),
+    fetchAll("git_repositories"),
+    supabase.from("studio_settings").select("data").maybeSingle(),
   ]);
   if (settings.error) throw new Error(settings.error.message);
-  return { kind: "account", workspaces, conversations, messages, prompts, skills, git,
-    files: await collectFiles(workspaces.map((w) => w.id)), settings: settings.data?.data ?? null };
+  return {
+    kind: "account",
+    workspaces,
+    conversations,
+    messages,
+    prompts,
+    skills,
+    git,
+    files: await collectFiles(workspaces.map((w) => w.id)),
+    settings: settings.data?.data ?? null,
+  };
 }
 
 /** Restores a backup. Workspace backups are imported as a fresh copy. */
@@ -62,15 +103,26 @@ export async function restoreBackup(input: BackupData) {
   await up("workspaces", r.workspaces);
   await up("conversations", r.conversations);
   // Insert IDs before branch links; timestamps do not guarantee parent order.
-  await up("messages", r.messages.map((row) => ({ ...row, parent_id: null })));
+  await up(
+    "messages",
+    r.messages.map((row) => ({ ...row, parent_id: null })),
+  );
   await up("messages", r.messages);
   await up("prompts", r.prompts);
   await up("skills", r.skills);
   await up("git_repositories", r.git);
-  for (const f of r.files) await writeFile(f.workspace_id, f.path, await (await fetch(f.data)).blob(), f.mime);
+  for (const f of r.files)
+    await writeFile(f.workspace_id, f.path, await (await fetch(f.data)).blob(), f.mime);
   if (data.settings) {
-    const { error } = await supabase.from("studio_settings").upsert({ user_id: uid, data: data.settings as Json });
+    const { error } = await supabase
+      .from("studio_settings")
+      .upsert({ user_id: uid, data: data.settings as Json });
     if (error) throw new Error(error.message);
   }
-  return { workspaces: r.workspaces.length, chats: r.conversations.length, files: r.files.length, workspaceId: r.workspaces[0]?.id };
+  return {
+    workspaces: r.workspaces.length,
+    chats: r.conversations.length,
+    files: r.files.length,
+    workspaceId: r.workspaces[0]?.id,
+  };
 }

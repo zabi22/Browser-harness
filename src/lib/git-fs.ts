@@ -1,6 +1,7 @@
 // Small repository filesystem shared by browser Git and read-only Worker upload-pack.
-import { Buffer } from 'buffer';
-if (typeof globalThis.Buffer === 'undefined') globalThis.Buffer=Buffer as typeof globalThis.Buffer;
+import { Buffer } from "buffer";
+if (typeof globalThis.Buffer === "undefined")
+  globalThis.Buffer = Buffer as typeof globalThis.Buffer;
 export type RepoData = Record<string, string>;
 export function bytesTo64(b: Uint8Array) {
   let s = "";

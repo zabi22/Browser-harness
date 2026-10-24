@@ -4,6 +4,11 @@ import { buildRequest, err, makeExtractor, type InBody } from "@/lib/chat-protoc
 import { verifySession } from "@/lib/session.server";
 import { userUpstream } from "@/lib/provider-keys.server";
 import { providerFetch } from "@/lib/provider-http.server";
+import { chatRequestSchema } from "@/lib/chat-request";
+import { readRequestJson, RequestBodyError } from "@/lib/request-body.server";
+import { readSse } from "@/lib/sse";
+import { streamTerminal } from "@/lib/stream-terminal";
+import { providerStatusMessage, redactProviderError } from "@/lib/provider-errors.server";
 
 // Internal (non-public) streaming proxy for the studio. Requires the owner's session token.
 
@@ -14,9 +19,18 @@ export const Route = createFileRoute("/api/chat")({
         if (!(await verifySession(request))) return err(401, "Not signed in");
         let body: InBody;
         try {
-          body = await request.json();
-        } catch {
-          return err(400, "Invalid JSON");
+          const parsed = chatRequestSchema.safeParse(await readRequestJson(request, 16_000_000));
+          if (!parsed.success)
+            return err(
+              400,
+              "Invalid chat request: check messages, tool definitions and parameter limits",
+            );
+          body = parsed.data;
+        } catch (error) {
+          return err(
+            error instanceof RequestBodyError ? error.status : 400,
+            error instanceof RequestBodyError ? error.message : "Invalid request body",
+          );
         }
         const model = getModel(body?.model);
         if (!model) return err(400, "Unknown model");
@@ -30,11 +44,16 @@ export const Route = createFileRoute("/api/chat")({
         if (typeof up === "string") return err(400, up);
 
         const { path, payload } = buildRequest(body, model);
+        const upstreamAbort = new AbortController();
         const callUpstream = (pl: unknown) =>
           providerFetch(up, path, {
             method: "POST",
             body: JSON.stringify(pl),
-            signal: AbortSignal.any([request.signal, AbortSignal.timeout(1800000)]),
+            signal: AbortSignal.any([
+              request.signal,
+              upstreamAbort.signal,
+              AbortSignal.timeout(1800000),
+            ]),
           });
         let upstream: Response;
         try {
@@ -44,20 +63,12 @@ export const Route = createFileRoute("/api/chat")({
           return err(502, "AI service unreachable");
         }
         if (!upstream.ok || !upstream.body) {
-          const text = await upstream.text().catch(() => "");
-          let message = `AI request failed (${upstream.status})`;
-          try {
-            const j = JSON.parse(text);
-            message = j.error?.message ?? j.message ?? message;
-          } catch {
-            /* keep default */
-          }
-          return err(upstream.status, message);
+          await upstream.body?.cancel();
+          return err(upstream.ok ? 502 : upstream.status, providerStatusMessage(upstream.status));
         }
 
         const enc = new TextEncoder();
         const firstBody = upstream.body;
-        let activeReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
         const stream = new ReadableStream({
           async start(controller) {
             let sentAny = false;
@@ -73,42 +84,36 @@ export const Route = createFileRoute("/api/chat")({
               native?: string | undefined;
               refusal?: boolean | undefined;
             }> => {
-              const reader = b.getReader();
-              activeReader = reader;
-              const dec = new TextDecoder();
-              let buf = "";
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) {
-                  for (const o of ex.flush()) send({ tool: o.tool });
-                  return {};
+              let completed = false;
+              for await (const data of readSse(b)) {
+                if (data === "[DONE]") {
+                  completed = true;
+                  break;
                 }
-                buf += dec.decode(value, { stream: true });
-                const lines = buf.split("\n");
-                buf = lines.pop() ?? "";
-                for (const line of lines) {
-                  const t = line.trim();
-                  if (!t.startsWith("data:")) continue;
-                  const data = t.slice(5).trim();
-                  if (!data || data === "[DONE]") continue;
-                  let ev: any;
-                  try {
-                    ev = JSON.parse(data);
-                  } catch {
-                    continue;
-                  }
-                  for (const out of ex.step(ev)) {
-                    if (out.d) send({ d: out.d });
-                    if (out.r) send({ r: out.r });
-                    if (out.tool) send({ tool: out.tool });
-                    if (out.truncated) send({ truncated: true });
-                    if (out.error) {
-                      reader.cancel().catch(() => {});
-                      return { error: out.error, native: out.native, refusal: out.refusal };
-                    }
+                let ev: unknown;
+                try {
+                  ev = JSON.parse(data);
+                } catch {
+                  return { error: "The provider returned a malformed stream event" };
+                }
+                completed ||= streamTerminal(model.provider, ev);
+                for (const out of ex.step(ev)) {
+                  if (out.d) send({ d: out.d });
+                  if (out.r) send({ r: out.r });
+                  if (out.tool) send({ tool: out.tool });
+                  if (out.truncated) send({ truncated: true });
+                  if (out.error) {
+                    return { error: out.error, native: out.native, refusal: out.refusal };
                   }
                 }
               }
+              if (!completed)
+                return {
+                  error:
+                    "The AI stream ended before completion. Your partial reply has been preserved.",
+                };
+              for (const out of ex.flush()) send(out);
+              return {};
             };
             // Keep intermediate proxies from idling out while the model thinks silently.
             const keepalive = setInterval(() => {
@@ -121,8 +126,9 @@ export const Route = createFileRoute("/api/chat")({
             try {
               const res = await pump(firstBody);
               if (res.error) {
-                console.error("[api/chat] upstream error:", res.native ?? "", res.error);
-                send(res.refusal ? { error: res.error, refusal: true } : { error: res.error });
+                console.error("[api/chat] upstream returned a terminal error");
+                const message = redactProviderError(res.error, up);
+                send(res.refusal ? { error: message, refusal: true } : { error: message });
               } else if (!sentAny) {
                 console.error("[api/chat] upstream stream produced no events");
                 send({
@@ -140,7 +146,7 @@ export const Route = createFileRoute("/api/chat")({
                 }
                 return;
               }
-              console.error("[api/chat] stream read failed:", e);
+              console.error("[api/chat] stream read failed");
               try {
                 send({ error: "Stream interrupted" });
                 controller.close();
@@ -152,7 +158,7 @@ export const Route = createFileRoute("/api/chat")({
             }
           },
           cancel() {
-            activeReader?.cancel().catch(() => {});
+            upstreamAbort.abort();
           },
         });
         const headers = new Headers({

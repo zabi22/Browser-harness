@@ -55,8 +55,8 @@ export async function saveRepo(repo: Repository) {
     throw new Error("Repository changed in another tab. Pull again before pushing.");
   repo.revision = revision;
 }
-export const CLONE_TOKEN_TTL_MS=300000;
-export const cloneExpiry=(now:number)=>new Date(now+CLONE_TOKEN_TTL_MS).toISOString();
+export const CLONE_TOKEN_TTL_MS = 300000;
+export const cloneExpiry = (now: number) => new Date(now + CLONE_TOKEN_TTL_MS).toISOString();
 export async function repoOperation(
   ws: string,
   name: string,
@@ -85,9 +85,16 @@ export async function repoOperation(
     case "commit": {
       const prefix = String(args["prefix"] ?? "");
       const files = await listFiles(ws);
-      const selected=new Set(files.filter(f=>!prefix||f.path.startsWith(prefix)).map(f=>prefix?f.path.slice(prefix.length).replace(/^\//,''):f.path));
-      for(const p of await git.listFiles({fs,dir})){
-        if(!selected.has(p)){await git.remove({fs,dir,filepath:p});await fs.promises.unlink('/'+p).catch(()=>{});}
+      const selected = new Set(
+        files
+          .filter((f) => !prefix || f.path.startsWith(prefix))
+          .map((f) => (prefix ? f.path.slice(prefix.length).replace(/^\//, "") : f.path)),
+      );
+      for (const p of await git.listFiles({ fs, dir })) {
+        if (!selected.has(p)) {
+          await git.remove({ fs, dir, filepath: p });
+          await fs.promises.unlink("/" + p).catch(() => {});
+        }
       }
       for (const f of files) {
         if (prefix && !f.path.startsWith(prefix)) continue;
@@ -161,14 +168,12 @@ export async function cloneUrl(repo: Repository) {
   if (!u.user) throw new Error("Not signed in");
   const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
   const token_hash = await sha256(new TextEncoder().encode(token));
-  const { error } = await supabase
-    .from("git_clone_tokens")
-    .insert({
-      repository_id: repo.id,
-      user_id: u.user.id,
-      token_hash,
-      expires_at: cloneExpiry(Date.now()),
-    });
+  const { error } = await supabase.from("git_clone_tokens").insert({
+    repository_id: repo.id,
+    user_id: u.user.id,
+    token_hash,
+    expires_at: cloneExpiry(Date.now()),
+  });
   if (error) throw error;
   const url = new URL(`/api/public/git/${repo.id}`, window.location.origin);
   url.username = "obh";
@@ -190,19 +195,31 @@ export async function repoTree(repo: Repository) {
       .map((p) => p.slice(1)),
     commits: await git.log({ fs, dir: "/", depth: 20 }).catch(() => []),
     branches: await git.listBranches({ fs, dir: "/" }).catch(() => []),
-    branch:await git.currentBranch({fs,dir:'/'})??'main',
+    branch: (await git.currentBranch({ fs, dir: "/" })) ?? "main",
   };
 }
-export async function commitChanges(repo:Repository,oid:string){
-  const fs=repoFs(repo.data);const {commit}=await git.readCommit({fs,dir:'/',oid});
-  const changes: {path:string;before:string;after:string}[]=[];
-  await git.walk({fs,dir:'/',trees:commit.parent[0]?[git.TREE({ref:commit.parent[0]}),git.TREE({ref:oid})]:[git.TREE({ref:oid})],map:async(path,entries)=>{
-    const [a,b]=commit.parent[0]?entries:[undefined,entries[0]];
-    if(path==='.' || (a&&await a.type()==='tree') || (b&&await b.type()==='tree'))return;
-    if(await a?.oid()===await b?.oid())return;
-    const decode=async(entry:typeof a)=>{const bytes=await entry?.content();return bytes?new TextDecoder().decode(bytes).slice(0,50000):'';};
-    changes.push({path,before:await decode(a),after:await decode(b)});
-  }});
+export async function commitChanges(repo: Repository, oid: string) {
+  const fs = repoFs(repo.data);
+  const { commit } = await git.readCommit({ fs, dir: "/", oid });
+  const changes: { path: string; before: string; after: string }[] = [];
+  await git.walk({
+    fs,
+    dir: "/",
+    trees: commit.parent[0]
+      ? [git.TREE({ ref: commit.parent[0] }), git.TREE({ ref: oid })]
+      : [git.TREE({ ref: oid })],
+    map: async (path, entries) => {
+      const [a, b] = commit.parent[0] ? entries : [undefined, entries[0]];
+      if (path === "." || (a && (await a.type()) === "tree") || (b && (await b.type()) === "tree"))
+        return;
+      if ((await a?.oid()) === (await b?.oid())) return;
+      const decode = async (entry: typeof a) => {
+        const bytes = await entry?.content();
+        return bytes ? new TextDecoder().decode(bytes).slice(0, 50000) : "";
+      };
+      changes.push({ path, before: await decode(a), after: await decode(b) });
+    },
+  });
   return changes;
 }
 export { bytesTo64 };

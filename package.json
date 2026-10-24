@@ -6,10 +6,13 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:node": "node tooling/build-node.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "browser:local": "node tooling/browser-runner.mjs",
+    "test:browser": "playwright test",
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -93,6 +96,7 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.26.5",
+    "@playwright/test": "1.64.1",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",
     "@types/node": "^22.16.5",

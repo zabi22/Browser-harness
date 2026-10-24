@@ -81,15 +81,27 @@ class CachedXHR {
 function emit(state: string, error?: string) {
   scope.postMessage({ type: "state", state, error });
 }
-async function boot(snapshot?: { manifest: DiskManifest; bytes: [string, Uint8Array][] }, warm?: boolean, memoryMib = 512) {
+async function boot(
+  snapshot?: { manifest: DiskManifest; bytes: [string, Uint8Array][] },
+  warm?: boolean,
+  memoryMib = 512,
+) {
   emit("starting");
   ready = false;
   log = "";
   // v86 selects its non-window scheduler in dedicated workers.
-  const scheduler=new MessageChannel();
-  const ticks:(()=>void)[]=[];
-  scheduler.port1.onmessage=()=>ticks.shift()?.();
-  Object.defineProperty(globalThis, 'global', {value:{setImmediate:(fn:(...args:unknown[])=>void,...args:unknown[])=>{ticks.push(()=>fn(...args));scheduler.port2.postMessage(0);}},configurable:true});
+  const scheduler = new MessageChannel();
+  const ticks: (() => void)[] = [];
+  scheduler.port1.onmessage = () => ticks.shift()?.();
+  Object.defineProperty(globalThis, "global", {
+    value: {
+      setImmediate: (fn: (...args: unknown[]) => void, ...args: unknown[]) => {
+        ticks.push(() => fn(...args));
+        scheduler.port2.postMessage(0);
+      },
+    },
+    configurable: true,
+  });
   Object.defineProperty(globalThis, "XMLHttpRequest", { value: CachedXHR, configurable: true });
   const integrity = JSON.parse(new TextDecoder().decode(await asset(BASE + "integrity.json")));
   for (const name of ["libv86.mjs", "v86.wasm", "alpine-fs.json", "seabios.bin", "vgabios.bin"]) {
@@ -131,8 +143,13 @@ async function boot(snapshot?: { manifest: DiskManifest; bytes: [string, Uint8Ar
     disable_mouse: true,
     ...(warmState ? { initial_state: { buffer: warmState } } : {}),
   });
-  outputBuffer='';
-  setInterval(()=>{if(outputBuffer){scope.postMessage({type:'output',text:outputBuffer});outputBuffer='';}},100);
+  outputBuffer = "";
+  setInterval(() => {
+    if (outputBuffer) {
+      scope.postMessage({ type: "output", text: outputBuffer });
+      outputBuffer = "";
+    }
+  }, 100);
   const initMarker = "OBH_READY_" + crypto.randomUUID().replace(/-/g, "");
   let initializing = false;
   let serialLine = "";
@@ -148,7 +165,10 @@ async function boot(snapshot?: { manifest: DiskManifest; bytes: [string, Uint8Ar
       return;
     }
     if (!pending) return;
-    if (text.trim() === pending.marker + "_BEGIN") { pending.started = true; return; }
+    if (text.trim() === pending.marker + "_BEGIN") {
+      pending.started = true;
+      return;
+    }
     const match = new RegExp("^" + pending.marker + ":(\\d+)$").exec(text.trim());
     if (match) {
       const p = pending;
@@ -166,7 +186,10 @@ async function boot(snapshot?: { manifest: DiskManifest; bytes: [string, Uint8Ar
     const ch = String.fromCharCode(b);
     log = (log + ch).slice(-100000);
     serialLine += ch;
-    if (ch === "\n") { flushLine(serialLine); serialLine = ""; }
+    if (ch === "\n") {
+      flushLine(serialLine);
+      serialLine = "";
+    }
     if (!ready && !initializing && /localhost:.*#\s*$/.test(log)) {
       if (warmState) {
         // Warm boot: the restored shell is already at a prompt; declare ready directly.
@@ -189,7 +212,14 @@ async function boot(snapshot?: { manifest: DiskManifest; bytes: [string, Uint8Ar
       setTimeout(() => vm.serial0_send("\n"), 500);
       return;
     }
-    if(snapshot) vm.fs9p.set_state([snapshot.manifest.inodes,snapshot.manifest.qid,snapshot.bytes,snapshot.manifest.total,snapshot.manifest.used]);
+    if (snapshot)
+      vm.fs9p.set_state([
+        snapshot.manifest.inodes,
+        snapshot.manifest.qid,
+        snapshot.bytes,
+        snapshot.manifest.total,
+        snapshot.manifest.used,
+      ]);
     vm.run();
   });
 }
@@ -215,7 +245,9 @@ async function exec(id: number, command: string, timeout: number) {
         reject(new Error("Linux command timed out"));
       }, timeout * 1000),
     };
-    vm.serial0_send(`printf '\\n${marker}_BEGIN\\n'; sh '${path}' 2>&1; obh_status=$?; rm -f '${path}'; printf '\\n${marker}:%s\\n' "$obh_status"\n`);
+    vm.serial0_send(
+      `printf '\\n${marker}_BEGIN\\n'; sh '${path}' 2>&1; obh_status=$?; rm -f '${path}'; printf '\\n${marker}:%s\\n' "$obh_status"\n`,
+    );
   });
 }
 async function snapshot() {
@@ -302,7 +334,10 @@ scope.onmessage = async ({ data: d }) => {
       default:
         throw new Error("Unknown Linux action");
     }
-    if (outputBuffer) { scope.postMessage({ type: "output", text: outputBuffer }); outputBuffer = ""; }
+    if (outputBuffer) {
+      scope.postMessage({ type: "output", text: outputBuffer });
+      outputBuffer = "";
+    }
     scope.postMessage({ type: "result", id: d.id, result });
   } catch (e) {
     scope.postMessage({ type: "result", id: d.id, error: (e as Error).message });

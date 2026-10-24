@@ -5,7 +5,13 @@ const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
 const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
 async function deriveKey(password: string, salt: Uint8Array) {
-  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+  const base = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
   return crypto.subtle.deriveKey(
     { name: "PBKDF2", salt: salt as BufferSource, iterations: ITER, hash: "SHA-256" },
     base,
@@ -21,22 +27,45 @@ function chunkedB64(u: Uint8Array) {
   return btoa(s);
 }
 
-export interface EncryptedBackup { app: "openchat"; v: 1; salt: string; iv: string; data: string }
+export interface EncryptedBackup {
+  app: "openchat";
+  v: 1;
+  salt: string;
+  iv: string;
+  data: string;
+}
 
 export async function encryptBackup(payload: unknown, password: string): Promise<EncryptedBackup> {
   if (!password) throw new Error("A password is required");
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(password, salt);
-  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(payload)));
-  return { app: "openchat", v: 1, salt: b64(salt), iv: b64(iv), data: chunkedB64(new Uint8Array(ct)) };
+  const ct = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    new TextEncoder().encode(JSON.stringify(payload)),
+  );
+  return {
+    app: "openchat",
+    v: 1,
+    salt: b64(salt),
+    iv: b64(iv),
+    data: chunkedB64(new Uint8Array(ct)),
+  };
 }
 
-export async function decryptBackup<T = unknown>(file: EncryptedBackup, password: string): Promise<T> {
+export async function decryptBackup<T = unknown>(
+  file: EncryptedBackup,
+  password: string,
+): Promise<T> {
   if (file?.app !== "openchat") throw new Error("This is not an OBH backup");
   const key = await deriveKey(password, unb64(file.salt));
   try {
-    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(file.iv) as BufferSource }, key, unb64(file.data) as BufferSource);
+    const pt = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: unb64(file.iv) as BufferSource },
+      key,
+      unb64(file.data) as BufferSource,
+    );
     return JSON.parse(new TextDecoder().decode(pt)) as T;
   } catch {
     throw new Error("Wrong password or damaged backup");

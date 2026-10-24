@@ -28,7 +28,9 @@ export function encodeWav(chunks: readonly Float32Array[], sampleRate: number): 
   return new Blob([bytes], { type: "audio/wav" });
 }
 
-export async function recordWav(onLevel?: (level: number) => void): Promise<{ stop: () => Promise<File> }> {
+export async function recordWav(
+  onLevel?: (level: number) => void,
+): Promise<{ stop: () => Promise<File> }> {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   let context: AudioContext | undefined;
   try {

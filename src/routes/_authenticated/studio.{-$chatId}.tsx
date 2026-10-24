@@ -7,7 +7,10 @@ export const Route = createFileRoute("/_authenticated/studio/{-$chatId}")({
       { title: "Studio — OBH" },
       { name: "description", content: "Your private Open Browser Harness AI studio workspace." },
       { property: "og:title", content: "Studio — OBH" },
-      { property: "og:description", content: "Your private Open Browser Harness AI studio workspace." },
+      {
+        property: "og:description",
+        content: "Your private Open Browser Harness AI studio workspace.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

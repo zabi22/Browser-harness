@@ -16,6 +16,8 @@ bun run typecheck
 bun run test
 bun run lint
 bun run build
+bun run build:node
+bun run test:browser
 node tooling/scan-secrets.mjs --history
 ```
 
@@ -26,6 +28,8 @@ Only `VITE_SUPABASE_*` publishable configuration belongs in the client. Provider
 This is a development checkpoint, not a production launch certification. Read [the audit](docs/LAUNCH_AUDIT.md), [implementation report](docs/IMPLEMENTATION_REPORT.md), [test results](docs/TEST_RESULTS.md), [security review](docs/SECURITY_REVIEW.md), [deployment guide](docs/DEPLOYMENT.md), and [release checklist](docs/RELEASE_CHECKLIST.md).
 
 No database migration or deployment is run automatically. The supplied database migration history is incomplete for a fresh installation; preserve the existing Supabase database and obtain its full schema/policies before attempting a clean self-hosted setup.
+
+The development branch includes an experimental, real local Playwright Browser QA companion. It requires Node 22.18+ (24 LTS recommended), installed Chrome and explicit pairing; see [Browser engine setup](docs/BROWSER_ENGINE.md). It is separate from the production app server and does not provide a hosted multi-user browser service.
 
 ## Lovable connection
 

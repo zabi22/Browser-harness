@@ -14,6 +14,16 @@ node_modules
 *.pem
 *.key
 artifacts/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+*.tmp
+*.bak
+.dev.vars.*
+.vercel/
+.netlify/
+.DS_Store
 dist
 dist-ssr
 .output

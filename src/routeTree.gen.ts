@@ -16,6 +16,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiFetchRouteImport } from './routes/api/fetch'
 import { Route as ApiMediaRouteImport } from './routes/api/media'
+import { Route as ApiProvidersRouteImport } from './routes/api/providers'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as AuthenticatedStudioChar123ChatIdChar125RouteImport } from './routes/_authenticated/studio.{-$chatId}'
 import { Route as ApiPublicGitRepoIdGitUploadPackRouteImport } from './routes/api/public/git/$repoId.git-upload-pack'
@@ -56,6 +57,11 @@ const ApiMediaRoute = ApiMediaRouteImport.update({
   path: '/api/media',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiProvidersRoute = ApiProvidersRouteImport.update({
+  id: '/api/providers',
+  path: '/api/providers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSearchRoute = ApiSearchRouteImport.update({
   id: '/api/search',
   path: '/api/search',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/api/fetch': typeof ApiFetchRoute
   '/api/media': typeof ApiMediaRoute
+  '/api/providers': typeof ApiProvidersRoute
   '/api/search': typeof ApiSearchRoute
   '/studio/{-$chatId}': typeof AuthenticatedStudioChar123ChatIdChar125Route
   '/api/public/git/$repoId/git-upload-pack': typeof ApiPublicGitRepoIdGitUploadPackRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/api/fetch': typeof ApiFetchRoute
   '/api/media': typeof ApiMediaRoute
+  '/api/providers': typeof ApiProvidersRoute
   '/api/search': typeof ApiSearchRoute
   '/studio/{-$chatId}': typeof AuthenticatedStudioChar123ChatIdChar125Route
   '/api/public/git/$repoId/git-upload-pack': typeof ApiPublicGitRepoIdGitUploadPackRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/api/fetch': typeof ApiFetchRoute
   '/api/media': typeof ApiMediaRoute
+  '/api/providers': typeof ApiProvidersRoute
   '/api/search': typeof ApiSearchRoute
   '/_authenticated/studio/{-$chatId}': typeof AuthenticatedStudioChar123ChatIdChar125Route
   '/api/public/git/$repoId/git-upload-pack': typeof ApiPublicGitRepoIdGitUploadPackRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/fetch'
     | '/api/media'
+    | '/api/providers'
     | '/api/search'
     | '/studio/{-$chatId}'
     | '/api/public/git/$repoId/git-upload-pack'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/fetch'
     | '/api/media'
+    | '/api/providers'
     | '/api/search'
     | '/studio/{-$chatId}'
     | '/api/public/git/$repoId/git-upload-pack'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/fetch'
     | '/api/media'
+    | '/api/providers'
     | '/api/search'
     | '/_authenticated/studio/{-$chatId}'
     | '/api/public/git/$repoId/git-upload-pack'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   ApiFetchRoute: typeof ApiFetchRoute
   ApiMediaRoute: typeof ApiMediaRoute
+  ApiProvidersRoute: typeof ApiProvidersRoute
   ApiSearchRoute: typeof ApiSearchRoute
   ApiPublicGitRepoIdGitUploadPackRoute: typeof ApiPublicGitRepoIdGitUploadPackRoute
   ApiPublicV1ChatCompletionsRoute: typeof ApiPublicV1ChatCompletionsRoute
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/api/media'
       fullPath: '/api/media'
       preLoaderRoute: typeof ApiMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/providers': {
+      id: '/api/providers'
+      path: '/api/providers'
+      fullPath: '/api/providers'
+      preLoaderRoute: typeof ApiProvidersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/search': {
@@ -293,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   ApiFetchRoute: ApiFetchRoute,
   ApiMediaRoute: ApiMediaRoute,
+  ApiProvidersRoute: ApiProvidersRoute,
   ApiSearchRoute: ApiSearchRoute,
   ApiPublicGitRepoIdGitUploadPackRoute: ApiPublicGitRepoIdGitUploadPackRoute,
   ApiPublicV1ChatCompletionsRoute: ApiPublicV1ChatCompletionsRoute,

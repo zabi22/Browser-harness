@@ -123,7 +123,7 @@ export function buildRequest(body: InBody, model: NonNullable<ReturnType<typeof 
       model: nativeModelId(model.id),
       stream: true,
       max_tokens: maxTokens,
-      ...(model.provider === "custom" ? {} : { extra_body: { google: { thinking_config: { thinking_level: thinking.effort, include_thoughts: true } } } }),
+      ...(model.provider === "google" ? { extra_body: { google: { thinking_config: { thinking_level: thinking.effort, include_thoughts: true } } } } : {}),
       ...(model.temperature && p.temperature !== undefined ? { temperature: Math.max(0, Math.min(2, p.temperature)) } : {}),
       ...(model.penalties && p.frequencyPenalty ? { frequency_penalty: p.frequencyPenalty } : {}),
       ...(model.penalties && p.presencePenalty ? { presence_penalty: p.presencePenalty } : {}),

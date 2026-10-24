@@ -1,29 +1,32 @@
-# Welcome to your Lovable project
+﻿# OpenChat AI Harness / Browser-harness
 
-This project was built with [Lovable](https://lovable.dev).
+An existing Lovable-connected, private developer studio built with TanStack Start, React 19, TypeScript, Tailwind CSS, and Supabase. The repository includes branching conversations, browser-side agents and tools, workspace files, isolated browser Linux, Git, backups, and project previews.
 
-## Build with Lovable
-
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+Source: https://github.com/zabi22/Browser-harness
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Use Node 22 or later and Bun. The checked-in `bun.lock` is authoritative; keep Vite on 7.x.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+bun install --frozen-lockfile
+# Copy .env.example to an ignored .env.local and configure your own Supabase project.
+bun run dev
+bun run typecheck
+bun run test
+bun run lint
+bun run build
+node tooling/scan-secrets.mjs --history
 ```
 
-## Built with
+Only `VITE_SUPABASE_*` publishable configuration belongs in the client. Provider encryption secrets, service-role credentials, and provider keys must remain server-side. `.env.example` contains variable names without secret values.
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+## Status and operations
+
+This is a development checkpoint, not a production launch certification. Read [the audit](docs/LAUNCH_AUDIT.md), [implementation report](docs/IMPLEMENTATION_REPORT.md), [test results](docs/TEST_RESULTS.md), [security review](docs/SECURITY_REVIEW.md), [deployment guide](docs/DEPLOYMENT.md), and [release checklist](docs/RELEASE_CHECKLIST.md).
+
+No database migration or deployment is run automatically. The supplied database migration history is incomplete for a fresh installation; preserve the existing Supabase database and obtain its full schema/policies before attempting a clean self-hosted setup.
+
+## Lovable connection
+
+This project was built with [Lovable](https://lovable.dev). Commits pushed to a connected branch can sync back to the editor. Preserve published history: do not force-push, amend, squash, or rebase pushed commits.

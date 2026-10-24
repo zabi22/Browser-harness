@@ -1,5 +1,6 @@
 // Browser-safe model registry shared by the studio UI and the internal proxy.
-export type Provider = "openai" | "anthropic" | "google" | "custom";
+import { type Provider, type ModelCapabilities, UNKNOWN_CAPABILITIES, isCompatibleProvider } from './providers';
+export type { Provider } from './providers';
 
 export interface ModelDef {
   id: string;
@@ -11,6 +12,12 @@ export interface ModelDef {
   penalties: boolean;
   /** Approximate context window in tokens (used for the context meter). */
   context: number;
+  maxOutput?: number;
+  capabilities?: ModelCapabilities;
+  pricing?: 'free' | 'paid' | 'local' | 'unknown';
+  promptPrice?: number;
+  completionPrice?: number;
+  discovered?: boolean;
 }
 
 export type ThinkingEffort = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
@@ -27,6 +34,10 @@ export function effortsFor(id: string): ThinkingEffort[] {
 
 /** Only options verified against the model's actual gateway endpoint are exposed. */
 export function thinkingCapabilities(id: string) {
+  const model = discoveredModels.get(id);
+  if (model || /^(custom|openrouter|ollama|ollama-cloud)\//.test(id)) return {
+    canDisable: true, mode: 'compatible', efforts: [] as ThinkingEffort[],
+  } as const;
   return {
     canDisable: ["openai/gpt-6-sol", "openai/gpt-6-luna", "openai/gpt-5.6-sol", "anthropic/claude-opus-5", "anthropic/claude-sonnet-5", "anthropic/claude-haiku-4-5"].includes(id),
     mode: id === "anthropic/claude-haiku-4-5" ? "budget" : id.startsWith("anthropic/") ? "adaptive" : id.startsWith("google/") ? "gemini" : "responses",
@@ -41,7 +52,7 @@ export function resolveThinking(id: string, thinking = true, effort: string = "l
   const rank = THINKING_EFFORTS.indexOf(effort as ThinkingEffort);
   const resolved = rank < 0 ? (list.includes("low") ? "low" : list[0]!)
     : [...list].reverse().find((e) => THINKING_EFFORTS.indexOf(e) <= rank) ?? list[0]!;
-  return { ...capabilities, enabled: !capabilities.canDisable || thinking, effort: resolved };
+  return { ...capabilities, enabled: list.length > 0 && (!capabilities.canDisable || thinking), effort: resolved ?? 'low' };
 }
 
 export const MODELS: ModelDef[] = [
@@ -64,9 +75,17 @@ export const DEFAULT_MODEL = "openai/gpt-6-astra";
 
 /** Any OpenAI-compatible model reached with the user's OpenRouter/custom key: "custom/<model id>". */
 export const CUSTOM_PREFIX = "custom/";
+const discoveredModels = new Map<string, ModelDef>();
+export function registerDiscoveredModels(models: ModelDef[]) { for (const model of models) discoveredModels.set(model.id, model); }
+export function modelCapabilities(model: ModelDef): ModelCapabilities {
+  return model.capabilities ?? (isCompatibleProvider(model.provider) ? UNKNOWN_CAPABILITIES : { tools: true, vision: true, reasoning: true, structuredOutput: false });
+}
 export function getModel(id: string): ModelDef | undefined {
-  if (typeof id === "string" && id.startsWith(CUSTOM_PREFIX) && id.length > CUSTOM_PREFIX.length && id.length < 200)
-    return { id, label: id.slice(CUSTOM_PREFIX.length), provider: "custom", temperature: true, penalties: true, context: 128_000 };
+  if (discoveredModels.has(id)) return discoveredModels.get(id);
+  if (typeof id === 'string' && /^(custom|openrouter|ollama|ollama-cloud)\/.{1,180}$/.test(id)) {
+    const provider = id.slice(0, id.indexOf('/')) as Provider;
+    return { id, label: id.slice(id.indexOf('/') + 1), provider, temperature: true, penalties: false, context: 0, capabilities: UNKNOWN_CAPABILITIES, pricing: provider === 'ollama' ? 'local' : 'unknown' };
+  }
   return MODELS.find((m) => m.id === id);
 }
 
